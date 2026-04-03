@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevLog</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal: #1D9E75;
+      --teal-light: #e8f7f2;
+      --text: #1a1a1a;
+      --muted: #888;
+      --border: #e5e5e5;
+      --bg: #ffffff;
+      --card: #f9f9f9;
+      --nav-h: 62px;
+    }
+
+    [data-theme="dark"] {
+      --teal-light: #0d3328;
+      --text: #f0f0f0;
+      --muted: #999;
+      --border: #2a2a2a;
+      --bg: #111111;
+      --card: #1c1c1c;
+    }
+    [data-theme="dark"] .modal      { background: #1c1c1c; }
+    [data-theme="dark"] .block-card.current { background: #0d2e22; }
+    [data-theme="dark"] .color-swatch.picked { border-color: #fff; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+
+    /* ── SCREENS ── */
+    .screen { display: none; padding-bottom: calc(var(--nav-h) + 20px); min-height: 100vh; }
+    .screen.active { display: block; }
+
+    .header {
+      padding: 20px 20px 14px;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0;
+      background: var(--bg); z-index: 10;
+    }
+    .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+    .header-top { display: flex; align-items: center; justify-content: space-between; }
+    .theme-toggle { background: none; border: none; cursor: pointer; font-size: 18px; padding: 2px; line-height: 1; }
+    /* ── WEEK STRIP ── */
+    .week-strip { display: flex; gap: 2px; margin-top: 12px; }
+    .day-chip {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 1px;
+      padding: 7px 2px 5px; border-radius: 20px;
+      cursor: pointer; background: none; border: none;
+      font-family: inherit; color: var(--text);
+      transition: background 0.15s, color 0.15s;
+    }
+    .day-chip.active { background: var(--teal); color: #fff; }
+    .dc-letter { font-size: 11px; font-weight: 600; color: var(--muted); line-height: 1; }
+    .day-chip.active .dc-letter { color: rgba(255,255,255,0.75); }
+    .dc-num { font-size: 14px; font-weight: 700; line-height: 1.2; }
+    .dc-dot {
+      width: 4px; height: 4px; border-radius: 50%;
+      background: var(--teal); margin-top: 3px;
+      visibility: hidden;
+    }
+    .dc-dot.show { visibility: visible; }
+    .day-chip.active .dc-dot { background: #fff; }
+
+    /* ── BOTTOM NAV ── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 100%; max-width: 430px;
+      height: var(--nav-h);
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      display: flex; z-index: 100;
+    }
+    .nav-btn {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 3px;
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 11px; font-weight: 500;
+      font-family: inherit; transition: color 0.15s;
+      position: relative;
+    }
+    .nav-btn.active { color: var(--teal); }
+    .nav-btn.active::after {
+      content: '';
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 28px; height: 2px;
+      background: var(--teal); border-radius: 0 0 3px 3px;
+    }
+    .nav-btn svg { width: 22px; height: 22px; }
+
+    /* ── FAB ── */
+    .fab {
+      position: fixed; bottom: calc(var(--nav-h) + 16px); right: 16px;
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--teal); color: #fff; border: none;
+      cursor: pointer; font-size: 28px; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 3px 14px rgba(29,158,117,0.45); z-index: 50;
+    }
+    .fab:active { transform: scale(0.94); }
+
+    /* ── SCHEDULE LIST ── */
+    .block-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+    .block-card {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 10px 14px 14px;
+    }
+    .dot { width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; }
+    .block-info { flex: 1; min-width: 0; }
+    .block-time { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+    .block-title { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .block-actions { display: flex; gap: 2px; }
+    .icon-btn {
+      background: none; border: none; cursor: pointer;
+      padding: 7px; border-radius: 8px; color: var(--muted);
+      display: flex; align-items: center; transition: background 0.1s, color 0.1s;
+    }
+    .icon-btn:hover { background: var(--border); }
+    .icon-btn.del:hover { color: #e53e3e; }
+    .icon-btn svg { width: 17px; height: 17px; }
+
+    /* ── NOTES LIST ── */
+    .notes-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+    .note-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 44px 14px 14px;
+      cursor: pointer; position: relative;
+    }
+    .note-card:active { background: var(--teal-light); }
+    .note-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .note-preview { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .note-date { font-size: 11px; color: var(--muted); margin-top: 6px; }
+    .note-del { position: absolute; top: 10px; right: 6px; }
+
+    /* ── EMPTY STATE ── */
+    .empty { text-align: center; padding: 64px 20px; color: var(--muted); }
+    .empty-icon { font-size: 38px; margin-bottom: 12px; }
+    .empty p { font-size: 14px; line-height: 1.6; }
+
+    /* ── MODAL ── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.38); z-index: 200;
+      align-items: flex-end; justify-content: center;
+    }
+    .overlay.open { display: flex; }
+
+    .modal {
+      background: #fff; border-radius: 20px 20px 0 0;
+      padding: 20px 20px 36px; width: 100%; max-width: 430px;
+      animation: slideUp 0.22s ease;
+      max-height: 92vh; overflow-y: auto;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+    .modal-head {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 20px;
+    }
+    .modal-head span { font-size: 17px; font-weight: 700; }
+    .modal-close {
+      background: none; border: none; cursor: pointer;
+      font-size: 20px; color: var(--muted); line-height: 1; padding: 4px;
+    }
+
+    /* ── FORM ── */
+    .form-group { margin-bottom: 16px; }
+    label {
+      display: block; font-size: 11px; font-weight: 700;
+      color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.6px; margin-bottom: 6px;
+    }
+    input[type="text"], input[type="time"], textarea {
+      width: 100%; border: 1.5px solid var(--border);
+      border-radius: 10px; padding: 11px 13px;
+      font-size: 15px; font-family: inherit;
+      color: var(--text); background: var(--bg);
+      outline: none; transition: border-color 0.15s;
+    }
+    input:focus, textarea:focus { border-color: var(--teal); }
+    textarea { resize: none; min-height: 250px; overflow-y: hidden; }
+
+    .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* ── COLOR PICKER ── */
+    .color-picker { display: flex; gap: 10px; flex-wrap: wrap; }
+    .color-swatch {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 3px solid transparent; cursor: pointer;
+      transition: border-color 0.15s, transform 0.1s;
+    }
+    .color-swatch.picked { border-color: #1a1a1a; transform: scale(1.15); }
+
+    /* ── NOTES SEARCH ── */
+    #notes-search { margin-top: 10px; padding: 9px 13px; font-size: 14px; }
+
+    /* ── HABITS LIST ── */
+    .habit-list { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .habit-card {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px; cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .habit-card.done { background: var(--teal-light); border-color: var(--teal); }
+    .habit-check {
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 2px solid var(--border); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .habit-card.done .habit-check { background: var(--teal); border-color: var(--teal); }
+    .habit-title { flex: 1; font-size: 15px; font-weight: 600; }
+
+    /* ── APP BRAND ── */
+    .brand-wrap { display: flex; align-items: baseline; gap: 9px; }
+    .app-brand  { font-size: 26px; font-weight: 800; color: var(--teal); letter-spacing: -0.8px; line-height: 1; }
+    .screen-tag {
+      font-size: 11px; font-weight: 700; color: var(--teal);
+      background: var(--teal-light); border-radius: 6px;
+      padding: 3px 8px; letter-spacing: 0.3px;
+    }
+
+    /* ── CURRENT TIME BLOCK ── */
+    .block-card.current {
+      border-left: 3px solid var(--teal);
+      background: #f0faf6;
+    }
+
+    /* ── SAVE BUTTON ── */
+    .btn-save {
+      width: 100%; background: var(--teal); color: #fff;
+      border: none; border-radius: 12px; padding: 14px;
+      font-size: 16px; font-weight: 600; font-family: inherit;
+      cursor: pointer; margin-top: 4px;
+    }
+    .btn-save:active { opacity: 0.85; }
+
+    /* ── DESKTOP (600px+) ── */
+    @media (min-width: 600px) {
+      html        { background: var(--html-bg, #eef0f3); }
+      body        { max-width: 900px; box-shadow: 0 0 48px rgba(0,0,0,0.10); }
+      .header     { padding: 28px 48px 18px; }
+      .block-list { padding: 16px 48px; }
+      .notes-list { padding: 16px 48px; }
+      .habit-list { padding: 20px 48px; }
+      .bottom-nav { max-width: 900px; }
+
+      /* Keep FAB anchored to the right edge of the 900px container */
+      .fab { right: max(24px, calc(50vw - 450px + 24px)); }
+
+      /* Modals float centered instead of sliding up from the bottom */
+      .overlay { align-items: center; padding: 24px; }
+      .modal   { border-radius: 16px; max-width: 520px; animation: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════
+     SCHEDULE SCREEN
+═════════════════════════════════ -->
+<div id="screen-schedule" class="screen active">
+  <div class="header">
+    <div class="header-top">
+      <div class="brand-wrap">
+        <span class="app-brand">Forge</span>
+        <span class="screen-tag">Schedule</span>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+    </div>
+    <div id="week-strip" class="week-strip"></div>
+  </div>
+  <div class="block-list" id="block-list"></div>
+</div>
+
+<!-- ════════════════════════════════
+     NOTES SCREEN
+═════════════════════════════════ -->
+<div id="screen-notes" class="screen">
+  <div class="header">
+    <div class="header-top">
+      <div class="brand-wrap">
+        <span class="app-brand">Forge</span>
+        <span class="screen-tag">Notes</span>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+    </div>
+    <input type="text" id="notes-search" placeholder="Search notes…" oninput="renderNotes()">
+  </div>
+  <div class="notes-list" id="notes-list"></div>
+</div>
+
+<!-- ════════════════════════════════
+     HABITS SCREEN
+═════════════════════════════════ -->
+<div id="screen-habits" class="screen">
+  <div class="header">
+    <div class="header-top">
+      <div class="brand-wrap">
+        <span class="app-brand">Forge</span>
+        <span class="screen-tag">Habits</span>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+    </div>
+  </div>
+  <div class="habit-list" id="habit-list"></div>
+</div>
+
+<!-- ════════════════════════════════
+     BOTTOM NAV
+═════════════════════════════════ -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-schedule" onclick="switchScreen('schedule')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2"/>
+      <line x1="16" y1="2" x2="16" y2="6"/>
+      <line x1="8" y1="2" x2="8" y2="6"/>
+      <line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>
+    Schedule
+  </button>
+  <button class="nav-btn" id="nav-habits" onclick="switchScreen('habits')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+    Habits
+  </button>
+  <button class="nav-btn" id="nav-notes" onclick="switchScreen('notes')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <line x1="10" y1="9" x2="8" y2="9"/>
+    </svg>
+    Notes
+  </button>
+</nav>
+
+<!-- + button -->
+<button class="fab" id="fab" onclick="openAddModal()">+</button>
+
+<!-- ════════════════════════════════
+     SCHEDULE MODAL
+═════════════════════════════════ -->
+<div class="overlay" id="schedule-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <span id="sched-modal-title">New Block</span>
+      <button class="modal-close" onclick="closeOverlay('schedule-modal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" id="b-title" placeholder="e.g. Coding study">
+    </div>
+    <div class="form-group">
+      <label>Start – End</label>
+      <div class="time-row">
+        <input type="time" id="b-start">
+        <input type="time" id="b-end">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Color</label>
+      <div class="color-picker" id="color-picker"></div>
+    </div>
+    <button class="btn-save" onclick="saveBlock()">Save</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     NOTES MODAL
+═════════════════════════════════ -->
+<div class="overlay" id="notes-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <span id="note-modal-title">New Note</span>
+      <button class="modal-close" onclick="closeOverlay('notes-modal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" id="n-title" placeholder="Note title">
+    </div>
+    <div class="form-group">
+      <label>Content</label>
+      <textarea id="n-body" placeholder="Write your note here..."></textarea>
+    </div>
+    <button class="btn-save" onclick="saveNote()">Save</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     HABITS MODAL
+═════════════════════════════════ -->
+<div class="overlay" id="habits-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <span>New Habit</span>
+      <button class="modal-close" onclick="closeOverlay('habits-modal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Habit</label>
+      <input type="text" id="h-title" placeholder="e.g. Code for 2 hours">
+    </div>
+    <button class="btn-save" onclick="saveHabit()">Add Habit</button>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────
+// CONSTANTS & STATE
+// ─────────────────────────────────────────────────────────
+
+const STORAGE_SCHEDULE = 'devlog_schedule';
+const STORAGE_NOTES    = 'devlog_notes';
+const STORAGE_HABITS   = 'devlog_habits';
+const STORAGE_CHECKS   = 'devlog_checks';
+
+const PALETTE = [
+  '#1D9E75', // teal (default)
+  '#4A90E2', // blue
+  '#E25C5C', // red
+  '#F5A623', // orange
+  '#9B59B6', // purple
+  '#27AE60', // green
+  '#E67E22', // amber
+  '#95A5A6', // grey
+];
+
+let currentScreen  = 'schedule';
+let editingBlockId = null;   // null = creating new
+let editingNoteId  = null;
+let pickedColor    = PALETTE[0];
+let viewingDay     = null;   // which day the schedule strip is showing
+
+// ─────────────────────────────────────────────────────────
+// localStorage HELPERS
+// ─────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────
+// DAY HELPERS
+// ─────────────────────────────────────────────────────────
+
+const DAY_KEYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+
+function todayKey() {
+  return DAY_KEYS[new Date().getDay()];
+}
+
+function todayLabel() {
+  const now  = new Date();
+  const name = DAY_KEYS[now.getDay()];
+  const date = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return `${name.charAt(0).toUpperCase() + name.slice(1)} · ${date}`;
+}
+
+// ─────────────────────────────────────────────────────────
+// WEEK STRIP
+// ─────────────────────────────────────────────────────────
+
+// Strip always runs Mon→Sun; map position → day key
+const STRIP_LETTERS = ['M','T','W','T','F','S','S'];
+const STRIP_KEYS    = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+
+// Returns 7 Date objects for Mon–Sun of the current calendar week
+function getWeekDates() {
+  const today = new Date();
+  const dow   = today.getDay();                      // 0=Sun … 6=Sat
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d;
+  });
+}
+
+function renderWeekStrip() {
+  const todayK = todayKey();
+  const dates  = getWeekDates();
+  document.getElementById('week-strip').innerHTML = STRIP_KEYS.map((key, i) => `
+    <button class="day-chip${viewingDay === key ? ' active' : ''}" onclick="selectDay('${key}')">
+      <span class="dc-letter">${STRIP_LETTERS[i]}</span>
+      <span class="dc-num">${dates[i].getDate()}</span>
+      <span class="dc-dot${key === todayK ? ' show' : ''}"></span>
+    </button>`).join('');
+}
+
+function selectDay(key) {
+  viewingDay = key;
+  renderWeekStrip();
+  renderBlocks();
+}
+
+// ─────────────────────────────────────────────────────────
+// SEED DATA  (used only the first time each day is opened)
+// ─────────────────────────────────────────────────────────
+
+const FREE_DAY = [
+  { title: 'Morning routine',   start: '07:00', end: '07:30', color: '#95A5A6' },
+  { title: 'Coding study',      start: '08:00', end: '10:00', color: '#9B59B6' },
+  { title: 'Break',             start: '10:00', end: '10:15', color: '#95A5A6' },
+  { title: 'AI tools practice', start: '10:15', end: '11:30', color: '#1D9E75' },
+  { title: 'Project building',  start: '11:30', end: '12:30', color: '#4A90E2' },
+  { title: 'Lunch',             start: '12:30', end: '13:30', color: '#95A5A6' },
+  { title: 'Self development',  start: '13:30', end: '14:30', color: '#F5A623' },
+  { title: 'CS foundations',    start: '14:30', end: '15:30', color: '#E25C5C' },
+  { title: 'Evening review',    start: '15:30', end: '16:00', color: '#95A5A6' },
+];
+
+const SCHOOL_DAY = [
+  { title: 'Morning study',     start: '07:00', end: '09:00', color: '#9B59B6' },
+  { title: 'School',            start: '09:00', end: '12:00', color: '#4A90E2' },
+  { title: 'Lunch + break',     start: '12:00', end: '13:00', color: '#95A5A6' },
+  { title: 'Coding study',      start: '13:00', end: '15:00', color: '#9B59B6' },
+  { title: 'AI tools + project',start: '15:00', end: '16:30', color: '#1D9E75' },
+  { title: 'Evening review',    start: '16:30', end: '17:00', color: '#95A5A6' },
+];
+
+const FRIDAY_BLOCKS = [
+  { title: 'Morning study',   start: '07:00', end: '09:00', color: '#9B59B6' },
+  { title: 'School',          start: '09:00', end: '11:00', color: '#4A90E2' },
+  { title: 'At grandparents', start: '11:00', end: '22:00', color: '#95A5A6' },
+];
+
+const SEEDS = {
+  monday:    SCHOOL_DAY,
+  tuesday:   FREE_DAY,
+  wednesday: SCHOOL_DAY,
+  thursday:  FREE_DAY,
+  friday:    FRIDAY_BLOCKS,
+  saturday:  FREE_DAY,
+  sunday:    FREE_DAY,
+};
+
+function seedIfNeeded() {
+  const schedule = JSON.parse(localStorage.getItem(STORAGE_SCHEDULE) || '{}');
+  let changed = false;
+  DAY_KEYS.forEach(day => {
+    if (schedule[day] === undefined) {
+      schedule[day] = SEEDS[day].map((b, i) => ({
+        ...b, id: `seed-${day.slice(0,3)}-${i}`
+      }));
+      changed = true;
+    }
+  });
+  if (changed) localStorage.setItem(STORAGE_SCHEDULE, JSON.stringify(schedule));
+}
+
+// ─────────────────────────────────────────────────────────
+// localStorage HELPERS  (schedule is now per-day)
+// ─────────────────────────────────────────────────────────
+
+function getBlocks() {
+  const schedule = JSON.parse(localStorage.getItem(STORAGE_SCHEDULE) || '{}');
+  return schedule[viewingDay] || [];
+}
+
+function setBlocks(blocks) {
+  const schedule = JSON.parse(localStorage.getItem(STORAGE_SCHEDULE) || '{}');
+  schedule[viewingDay] = blocks;
+  localStorage.setItem(STORAGE_SCHEDULE, JSON.stringify(schedule));
+}
+
+function getNotes()  { return JSON.parse(localStorage.getItem(STORAGE_NOTES)  || '[]'); }
+function setNotes(n) { localStorage.setItem(STORAGE_NOTES,  JSON.stringify(n)); }
+
+function todayDateKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function getHabits()  { return JSON.parse(localStorage.getItem(STORAGE_HABITS) || '[]'); }
+function setHabits(h) { localStorage.setItem(STORAGE_HABITS, JSON.stringify(h)); }
+function getTodayChecks() {
+  const all = JSON.parse(localStorage.getItem(STORAGE_CHECKS) || '{}');
+  return all[todayDateKey()] || [];
+}
+function setTodayChecks(ids) {
+  const all = JSON.parse(localStorage.getItem(STORAGE_CHECKS) || '{}');
+  all[todayDateKey()] = ids;
+  localStorage.setItem(STORAGE_CHECKS, JSON.stringify(all));
+}
+
+// ─────────────────────────────────────────────────────────
+// THEME
+// ─────────────────────────────────────────────────────────
+
+function setTheme(theme) {
+  document.body.setAttribute('data-theme', theme);
+  document.documentElement.style.setProperty('--html-bg', theme === 'dark' ? '#0a0a0a' : '#eef0f3');
+  localStorage.setItem('devlog_theme', theme);
+  document.querySelectorAll('.theme-toggle').forEach(b => b.textContent = theme === 'dark' ? '☀️' : '🌙');
+}
+
+function toggleTheme() {
+  setTheme(document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+}
+
+// ─────────────────────────────────────────────────────────
+// SCREEN SWITCHING
+// ─────────────────────────────────────────────────────────
+
+function switchScreen(name) {
+  currentScreen = name;
+
+  // toggle screen visibility
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+
+  // highlight active nav button
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('nav-' + name).classList.add('active');
+}
+
+// ─────────────────────────────────────────────────────────
+// MODAL HELPERS
+// ─────────────────────────────────────────────────────────
+
+function openOverlay(id)  { document.getElementById(id).classList.add('open'); }
+function closeOverlay(id) { document.getElementById(id).classList.remove('open'); }
+
+// Tap outside modal sheet → close
+document.querySelectorAll('.overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// FAB opens the right modal depending on which screen we're on
+function openAddModal() {
+  if (currentScreen === 'habits') {
+    document.getElementById('h-title').value = '';
+    openOverlay('habits-modal');
+  } else if (currentScreen === 'schedule') {
+    editingBlockId = null;
+    document.getElementById('sched-modal-title').textContent = 'New Block';
+    document.getElementById('b-title').value = '';
+    document.getElementById('b-start').value = '';
+    document.getElementById('b-end').value   = '';
+    pickedColor = PALETTE[0];
+    renderColorPicker();
+    openOverlay('schedule-modal');
+  } else {
+    editingNoteId = null;
+    document.getElementById('note-modal-title').textContent = 'New Note';
+    document.getElementById('n-title').value = '';
+    const nb = document.getElementById('n-body');
+    nb.value = '';
+    nb.style.height = '250px';
+    openOverlay('notes-modal');
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// COLOR PICKER
+// ─────────────────────────────────────────────────────────
+
+function renderColorPicker() {
+  document.getElementById('color-picker').innerHTML = PALETTE.map(c => `
+    <div class="color-swatch ${c === pickedColor ? 'picked' : ''}"
+         style="background:${c}"
+         onclick="pickColor('${c}')">
+    </div>`).join('');
+}
+
+function pickColor(c) {
+  pickedColor = c;
+  renderColorPicker();
+}
+
+// ─────────────────────────────────────────────────────────
+// SCHEDULE – ADD / EDIT / DELETE
+// ─────────────────────────────────────────────────────────
+
+// Returns true if the current clock time falls inside this block, but only when viewing today
+function isCurrentBlock(b) {
+  if (viewingDay !== todayKey()) return false;
+  const now = new Date();
+  const cur = now.getHours() * 60 + now.getMinutes();
+  return cur >= toMinutes(b.start) && cur < toMinutes(b.end);
+}
+
+// Convert "HH:MM" → total minutes, used for sorting
+function toMinutes(t) {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
+// "08:00" → "8:00"  (nicer display, drop leading zero on hour)
+function prettyTime(t) {
+  const [h, m] = t.split(':');
+  return `${parseInt(h)}:${m}`;
+}
+
+function saveBlock() {
+  const title = document.getElementById('b-title').value.trim();
+  const start = document.getElementById('b-start').value;
+  const end   = document.getElementById('b-end').value;
+
+  if (!title || !start || !end) { alert('Please fill in all fields.'); return; }
+
+  let blocks = getBlocks();
+
+  if (editingBlockId) {
+    // Update the existing block that matches this id
+    blocks = blocks.map(b =>
+      b.id === editingBlockId
+        ? { ...b, title, start, end, color: pickedColor }
+        : b
+    );
+  } else {
+    // Push a brand-new block with a unique id
+    blocks.push({ id: String(Date.now()), title, start, end, color: pickedColor });
+  }
+
+  setBlocks(blocks);
+  closeOverlay('schedule-modal');
+  renderBlocks();
+}
+
+function openEditBlock(id) {
+  const b = getBlocks().find(b => b.id === id);
+  if (!b) return;
+  editingBlockId = id;
+  document.getElementById('sched-modal-title').textContent = 'Edit Block';
+  document.getElementById('b-title').value = b.title;
+  document.getElementById('b-start').value = b.start;
+  document.getElementById('b-end').value   = b.end;
+  pickedColor = b.color;
+  renderColorPicker();
+  openOverlay('schedule-modal');
+}
+
+function deleteBlock(id) {
+  if (!confirm('Delete this block?')) return;
+  setBlocks(getBlocks().filter(b => b.id !== id));
+  renderBlocks();
+}
+
+function renderBlocks() {
+  // Sort by start time before displaying
+  const blocks = getBlocks().sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
+  const el = document.getElementById('block-list');
+
+  if (!blocks.length) {
+    el.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">📅</div>
+        <p>No time blocks yet.<br>Tap <strong>+</strong> to add your first one.</p>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = blocks.map(b => `
+    <div class="block-card${isCurrentBlock(b) ? ' current' : ''}">
+      <div class="dot" style="background:${b.color}"></div>
+      <div class="block-info">
+        <div class="block-time">${prettyTime(b.start)} – ${prettyTime(b.end)}</div>
+        <div class="block-title">${esc(b.title)}</div>
+      </div>
+      <div class="block-actions">
+        <button class="icon-btn" onclick="openEditBlock('${b.id}')" title="Edit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+        <button class="icon-btn del" onclick="deleteBlock('${b.id}')" title="Delete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6"/><path d="M14 11v6"/>
+            <path d="M9 6V4h6v2"/>
+          </svg>
+        </button>
+      </div>
+    </div>`).join('');
+}
+
+// ─────────────────────────────────────────────────────────
+// HABITS – ADD / DELETE / RENDER
+// ─────────────────────────────────────────────────────────
+
+function saveHabit() {
+  const title = document.getElementById('h-title').value.trim();
+  if (!title) { alert('Please enter a habit name.'); return; }
+  const habits = getHabits();
+  habits.push({ id: String(Date.now()), title });
+  setHabits(habits);
+  closeOverlay('habits-modal');
+  renderHabits();
+}
+
+function toggleHabit(id) {
+  const checks = getTodayChecks();
+  const idx = checks.indexOf(id);
+  idx === -1 ? checks.push(id) : checks.splice(idx, 1);
+  setTodayChecks(checks);
+  renderHabits();
+}
+
+function deleteHabit(id, event) {
+  event.stopPropagation();
+  if (!confirm('Delete this habit?')) return;
+  setHabits(getHabits().filter(h => h.id !== id));
+  setTodayChecks(getTodayChecks().filter(cid => cid !== id));
+  renderHabits();
+}
+
+function renderHabits() {
+  const habits = getHabits();
+  const checks = getTodayChecks();
+  const el = document.getElementById('habit-list');
+
+  if (!habits.length) {
+    el.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">✅</div>
+        <p>No habits yet.<br>Tap <strong>+</strong> to add your first one.</p>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = habits.map(h => {
+    const done = checks.includes(h.id);
+    return `
+    <div class="habit-card${done ? ' done' : ''}" onclick="toggleHabit('${h.id}')">
+      <div class="habit-check">${done ? '<svg width="12" height="10" viewBox="0 0 12 10" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,5 4,8 11,1"/></svg>' : ''}</div>
+      <span class="habit-title">${esc(h.title)}</span>
+      <button class="icon-btn del" onclick="deleteHabit('${h.id}', event)" title="Delete">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          <path d="M10 11v6"/><path d="M14 11v6"/>
+          <path d="M9 6V4h6v2"/>
+        </svg>
+      </button>
+    </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────────────────
+// NOTES – ADD / EDIT / DELETE
+// ─────────────────────────────────────────────────────────
+
+function saveNote() {
+  const title = document.getElementById('n-title').value.trim();
+  const body  = document.getElementById('n-body').value.trim();
+
+  if (!title) { alert('Please add a title.'); return; }
+
+  let notes = getNotes();
+
+  if (editingNoteId) {
+    notes = notes.map(n =>
+      n.id === editingNoteId
+        ? { ...n, title, body, updatedAt: Date.now() }
+        : n
+    );
+  } else {
+    // unshift = add to the front → newest note appears first
+    notes.unshift({ id: String(Date.now()), title, body, createdAt: Date.now(), updatedAt: Date.now() });
+  }
+
+  setNotes(notes);
+  closeOverlay('notes-modal');
+  renderNotes();
+}
+
+function openEditNote(id) {
+  const n = getNotes().find(n => n.id === id);
+  if (!n) return;
+  editingNoteId = id;
+  document.getElementById('note-modal-title').textContent = 'Edit Note';
+  document.getElementById('n-title').value = n.title;
+  const nb = document.getElementById('n-body');
+  nb.value = n.body;
+  nb.style.height = 'auto';
+  nb.style.height = Math.max(250, nb.scrollHeight) + 'px';
+  openOverlay('notes-modal');
+}
+
+function deleteNote(id, event) {
+  event.stopPropagation(); // prevent the card click (edit) from firing too
+  if (!confirm('Delete this note?')) return;
+  setNotes(getNotes().filter(n => n.id !== id));
+  renderNotes();
+}
+
+function fmtDate(ts) {
+  return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function renderNotes() {
+  const q = (document.getElementById('notes-search').value || '').toLowerCase();
+  const notes = getNotes().filter(n =>
+    !q || n.title.toLowerCase().includes(q) || (n.body || '').toLowerCase().includes(q)
+  );
+  const el = document.getElementById('notes-list');
+
+  if (!notes.length) {
+    el.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">📝</div>
+        <p>Nothing here yet. Tap + to add your first note.</p>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = notes.map(n => `
+    <div class="note-card" onclick="openEditNote('${n.id}')">
+      <button class="icon-btn del note-del" onclick="deleteNote('${n.id}', event)" title="Delete">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          <path d="M10 11v6"/><path d="M14 11v6"/>
+          <path d="M9 6V4h6v2"/>
+        </svg>
+      </button>
+      <div class="note-title">${esc(n.title)}</div>
+      <div class="note-preview">${esc(n.body || 'No content')}</div>
+      <div class="note-date">${fmtDate(n.updatedAt)}</div>
+    </div>`).join('');
+}
+
+// ─────────────────────────────────────────────────────────
+// SECURITY HELPER
+// Escape any user text before inserting it into HTML.
+// This prevents XSS — e.g. if someone typed <script> in a title.
+// ─────────────────────────────────────────────────────────
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ─────────────────────────────────────────────────────────
+// BOOT – render both lists on page load
+// ─────────────────────────────────────────────────────────
+
+setTheme(localStorage.getItem('devlog_theme') || 'light');
+viewingDay = todayKey();
+seedIfNeeded();
+renderColorPicker();
+renderWeekStrip();
+renderBlocks();
+renderNotes();
+renderHabits();
+
+// Auto-grow the notes textarea as the user types
+document.getElementById('n-body').addEventListener('input', function () {
+  this.style.height = 'auto';
+  this.style.height = Math.max(250, this.scrollHeight) + 'px';
+});
+</script>
+</body>
+</html>
