@@ -519,28 +519,30 @@ function selectDay(key) {
 // ─────────────────────────────────────────────────────────
 
 const FREE_DAY = [
-  { title: 'Wake up + breakfast', start: '09:30', end: '10:00', color: '#95A5A6' },
-  { title: 'Coding study',        start: '10:00', end: '12:00', color: '#9B59B6' },
-  { title: 'Lunch + break',       start: '12:00', end: '12:30', color: '#95A5A6' },
-  { title: 'Project building',    start: '12:30', end: '14:00', color: '#1D9E75' },
-  { title: 'CS foundations',      start: '14:00', end: '15:00', color: '#E25C5C' },
-  { title: 'LeetCode problem',    start: '15:00', end: '15:30', color: '#F5A623' },
-  { title: 'Evening review',      start: '15:30', end: '16:00', color: '#95A5A6' },
+  { title: 'Morning routine',   start: '07:00', end: '07:30', color: '#95A5A6' },
+  { title: 'Coding study',      start: '08:00', end: '10:00', color: '#9B59B6' },
+  { title: 'Break',             start: '10:00', end: '10:15', color: '#95A5A6' },
+  { title: 'AI tools practice', start: '10:15', end: '11:30', color: '#1D9E75' },
+  { title: 'Project building',  start: '11:30', end: '12:30', color: '#4A90E2' },
+  { title: 'Lunch',             start: '12:30', end: '13:30', color: '#95A5A6' },
+  { title: 'Self development',  start: '13:30', end: '14:30', color: '#F5A623' },
+  { title: 'CS foundations',    start: '14:30', end: '15:30', color: '#E25C5C' },
+  { title: 'Evening review',    start: '15:30', end: '16:00', color: '#95A5A6' },
 ];
 
 const SCHOOL_DAY = [
-  { title: 'Wake up + breakfast', start: '08:00', end: '08:30', color: '#95A5A6' },
-  { title: 'Coding warmup',       start: '08:30', end: '09:00', color: '#9B59B6' },
-  { title: 'School',              start: '09:00', end: '12:00', color: '#4A90E2' },
-  { title: 'Coding study',        start: '12:30', end: '15:30', color: '#9B59B6' },
-  { title: 'Evening review',      start: '15:30', end: '16:00', color: '#95A5A6' },
+  { title: 'Morning study',     start: '07:00', end: '09:00', color: '#9B59B6' },
+  { title: 'School',            start: '09:00', end: '12:00', color: '#4A90E2' },
+  { title: 'Lunch + break',     start: '12:00', end: '13:00', color: '#95A5A6' },
+  { title: 'Coding study',      start: '13:00', end: '15:00', color: '#9B59B6' },
+  { title: 'AI tools + project',start: '15:00', end: '16:30', color: '#1D9E75' },
+  { title: 'Evening review',    start: '16:30', end: '17:00', color: '#95A5A6' },
 ];
 
 const FRIDAY_BLOCKS = [
-  { title: 'Wake up + breakfast', start: '08:00', end: '08:30', color: '#95A5A6' },
-  { title: 'Coding warmup',       start: '08:30', end: '09:00', color: '#9B59B6' },
-  { title: 'School',              start: '09:00', end: '11:00', color: '#4A90E2' },
-  { title: 'At grandparents',     start: '11:00', end: '22:00', color: '#95A5A6' },
+  { title: 'Morning study',   start: '07:00', end: '09:00', color: '#9B59B6' },
+  { title: 'School',          start: '09:00', end: '11:00', color: '#4A90E2' },
+  { title: 'At grandparents', start: '11:00', end: '22:00', color: '#95A5A6' },
 ];
 
 const SEEDS = {
@@ -553,13 +555,7 @@ const SEEDS = {
   sunday:    FREE_DAY,
 };
 
-const SEED_VERSION = 'v2';
-
 function seedIfNeeded() {
-  if (localStorage.getItem('devlog_seed_version') !== SEED_VERSION) {
-    localStorage.removeItem(STORAGE_SCHEDULE);
-    localStorage.setItem('devlog_seed_version', SEED_VERSION);
-  }
   const schedule = JSON.parse(localStorage.getItem(STORAGE_SCHEDULE) || '{}');
   let changed = false;
   DAY_KEYS.forEach(day => {
