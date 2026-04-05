@@ -191,7 +191,7 @@
       color: var(--muted); text-transform: uppercase;
       letter-spacing: 0.6px; margin-bottom: 6px;
     }
-    input[type="text"], input[type="time"], textarea {
+    input[type="text"], input[type="time"], input[type="date"], textarea {
       width: 100%; border: 1.5px solid var(--border);
       border-radius: 10px; padding: 11px 13px;
       font-size: 15px; font-family: inherit;
@@ -242,6 +242,46 @@
       padding: 3px 8px; letter-spacing: 0.3px;
     }
 
+    /* ── GOALS LIST ── */
+    .goal-section { padding: 12px 16px 4px; }
+    .goal-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 10px; }
+    .goal-list { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
+    .goal-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px; cursor: pointer; position: relative;
+    }
+    .goal-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    .goal-title { font-size: 15px; font-weight: 600; flex: 1; }
+    .goal-deadline { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .status-badge {
+      display: inline-block; font-size: 10px; font-weight: 700;
+      padding: 3px 8px; border-radius: 20px; margin-bottom: 8px;
+      text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .status-on-track { background: var(--teal-light); color: var(--teal); }
+    .status-due-soon { background: #fff4e0; color: #E67E22; }
+    .status-overdue  { background: #fde8e8; color: #E25C5C; }
+    [data-theme="dark"] .status-due-soon { background: #2d2000; color: #F5A623; }
+    [data-theme="dark"] .status-overdue  { background: #2d0e0e; color: #E25C5C; }
+    .progress-bar { width: 100%; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--teal); border-radius: 3px; transition: width 0.3s; }
+    .progress-pct { font-size: 11px; color: var(--muted); margin-top: 4px; text-align: right; }
+
+    /* ── CATEGORY TOGGLE ── */
+    .cat-toggle { display: flex; gap: 8px; }
+    .cat-btn {
+      flex: 1; padding: 10px; border-radius: 10px;
+      border: 1.5px solid var(--border); background: none;
+      font-size: 14px; font-weight: 600; font-family: inherit;
+      color: var(--muted); cursor: pointer; transition: all 0.15s;
+    }
+    .cat-btn.active { border-color: var(--teal); background: var(--teal-light); color: var(--teal); }
+
+    /* ── PROGRESS SLIDER ── */
+    .progress-row { display: flex; align-items: center; gap: 12px; }
+    .progress-row input[type="range"] { flex: 1; accent-color: var(--teal); cursor: pointer; }
+    .progress-row span { font-size: 14px; font-weight: 700; color: var(--teal); min-width: 38px; text-align: right; }
+
     /* ── CURRENT TIME BLOCK ── */
     .block-card.current {
       border-left: 3px solid var(--teal);
@@ -265,6 +305,8 @@
       .block-list { padding: 16px 48px; }
       .notes-list { padding: 16px 48px; }
       .habit-list { padding: 20px 48px; }
+      .goal-list    { padding: 0 48px; }
+      .goal-section { padding: 12px 48px 4px; }
       .bottom-nav { max-width: 900px; }
 
       /* Keep FAB anchored to the right edge of the 900px container */
@@ -329,6 +371,23 @@
 </div>
 
 <!-- ════════════════════════════════
+     GOALS SCREEN
+═════════════════════════════════ -->
+<div id="screen-goals" class="screen">
+  <div class="header">
+    <div class="header-top">
+      <div class="brand-wrap">
+        <span class="app-brand">Forge</span>
+        <span class="screen-tag">Goals</span>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+    </div>
+  </div>
+  <div id="goal-major-section"></div>
+  <div id="goal-minor-section"></div>
+</div>
+
+<!-- ════════════════════════════════
      BOTTOM NAV
 ═════════════════════════════════ -->
 <nav class="bottom-nav">
@@ -340,6 +399,14 @@
       <line x1="3" y1="10" x2="21" y2="10"/>
     </svg>
     Schedule
+  </button>
+  <button class="nav-btn" id="nav-goals" onclick="switchScreen('goals')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <circle cx="12" cy="12" r="6"/>
+      <circle cx="12" cy="12" r="2"/>
+    </svg>
+    Goals
   </button>
   <button class="nav-btn" id="nav-habits" onclick="switchScreen('habits')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -428,6 +495,42 @@
   </div>
 </div>
 
+<!-- ════════════════════════════════
+     GOALS MODAL
+═════════════════════════════════ -->
+<div class="overlay" id="goals-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <span id="goal-modal-title">New Goal</span>
+      <button class="modal-close" onclick="closeOverlay('goals-modal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" id="g-title" placeholder="e.g. Build a web app">
+    </div>
+    <div class="form-group">
+      <label>Category</label>
+      <div class="cat-toggle">
+        <button class="cat-btn active" id="cat-major" onclick="pickCategory('major')">Major</button>
+        <button class="cat-btn" id="cat-minor" onclick="pickCategory('minor')">Minor</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Deadline</label>
+      <input type="date" id="g-deadline">
+    </div>
+    <div class="form-group">
+      <label>Progress</label>
+      <div class="progress-row">
+        <input type="range" id="g-progress" min="0" max="100" step="10" value="0"
+               oninput="document.getElementById('g-progress-val').textContent = this.value + '%'">
+        <span id="g-progress-val">0%</span>
+      </div>
+    </div>
+    <button class="btn-save" onclick="saveGoal()">Save</button>
+  </div>
+</div>
+
 <script>
 // ─────────────────────────────────────────────────────────
 // CONSTANTS & STATE
@@ -437,6 +540,7 @@ const STORAGE_SCHEDULE = 'devlog_schedule';
 const STORAGE_NOTES    = 'devlog_notes';
 const STORAGE_HABITS   = 'devlog_habits';
 const STORAGE_CHECKS   = 'devlog_checks';
+const STORAGE_GOALS    = 'devlog_goals';
 
 const PALETTE = [
   '#1D9E75', // teal (default)
@@ -450,10 +554,12 @@ const PALETTE = [
 ];
 
 let currentScreen  = 'schedule';
-let editingBlockId = null;   // null = creating new
+let editingBlockId = null;
 let editingNoteId  = null;
+let editingGoalId  = null;
 let pickedColor    = PALETTE[0];
-let viewingDay     = null;   // which day the schedule strip is showing
+let pickedCategory = 'major';
+let viewingDay     = null;
 
 // ─────────────────────────────────────────────────────────
 // localStorage HELPERS
@@ -652,7 +758,16 @@ document.querySelectorAll('.overlay').forEach(el => {
 
 // FAB opens the right modal depending on which screen we're on
 function openAddModal() {
-  if (currentScreen === 'habits') {
+  if (currentScreen === 'goals') {
+    editingGoalId = null;
+    document.getElementById('goal-modal-title').textContent = 'New Goal';
+    document.getElementById('g-title').value    = '';
+    document.getElementById('g-deadline').value = '';
+    document.getElementById('g-progress').value = 0;
+    document.getElementById('g-progress-val').textContent = '0%';
+    pickCategory('major');
+    openOverlay('goals-modal');
+  } else if (currentScreen === 'habits') {
     document.getElementById('h-title').value = '';
     openOverlay('habits-modal');
   } else if (currentScreen === 'schedule') {
@@ -948,6 +1063,125 @@ function renderNotes() {
 }
 
 // ─────────────────────────────────────────────────────────
+// GOALS – ADD / EDIT / DELETE
+// ─────────────────────────────────────────────────────────
+
+function getGoals()  { return JSON.parse(localStorage.getItem(STORAGE_GOALS) || '[]'); }
+function setGoals(g) { localStorage.setItem(STORAGE_GOALS, JSON.stringify(g)); }
+
+function pickCategory(cat) {
+  pickedCategory = cat;
+  document.getElementById('cat-major').classList.toggle('active', cat === 'major');
+  document.getElementById('cat-minor').classList.toggle('active', cat === 'minor');
+}
+
+function getGoalStatus(deadline) {
+  if (!deadline) return 'on-track';
+  const now = new Date(); now.setHours(0,0,0,0);
+  const dl  = new Date(deadline + 'T00:00:00');
+  const diff = (dl - now) / 86400000;
+  if (diff < 0)  return 'overdue';
+  if (diff <= 7) return 'due-soon';
+  return 'on-track';
+}
+
+function fmtDeadline(d) {
+  if (!d) return 'No deadline';
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function renderGoals() {
+  const goals = getGoals();
+  const major = goals.filter(g => g.category === 'major');
+  const minor = goals.filter(g => g.category === 'minor');
+
+  if (!goals.length) {
+    document.getElementById('goal-major-section').innerHTML = '';
+    document.getElementById('goal-minor-section').innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">🎯</div>
+        <p>No goals yet.<br>Tap <strong>+</strong> to add your first one.</p>
+      </div>`;
+    return;
+  }
+  renderGoalSection('goal-major-section', 'Major Goals', major);
+  renderGoalSection('goal-minor-section', 'Minor Goals', minor);
+}
+
+function renderGoalSection(elId, label, goals) {
+  const el = document.getElementById(elId);
+  if (!goals.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div class="goal-section"><div class="goal-section-title">${label}</div></div>
+    <div class="goal-list">
+      ${goals.map(g => {
+        const status = getGoalStatus(g.deadline);
+        const statusLabel = { 'on-track': 'On track', 'due-soon': 'Due soon', 'overdue': 'Overdue' }[status];
+        return `
+        <div class="goal-card" onclick="openEditGoal('${g.id}')">
+          <div class="goal-card-top">
+            <div class="goal-title">${esc(g.title)}</div>
+            <div class="goal-actions">
+              <button class="icon-btn del" onclick="deleteGoal('${g.id}', event)" title="Delete">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  <path d="M10 11v6"/><path d="M14 11v6"/>
+                  <path d="M9 6V4h6v2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <span class="status-badge status-${status}">${statusLabel}</span>
+          <div class="goal-deadline">Due: ${fmtDeadline(g.deadline)}</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${g.progress}%"></div></div>
+          <div class="progress-pct">${g.progress}%</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function openEditGoal(id) {
+  const g = getGoals().find(g => g.id === id);
+  if (!g) return;
+  editingGoalId = id;
+  document.getElementById('goal-modal-title').textContent = 'Edit Goal';
+  document.getElementById('g-title').value    = g.title;
+  document.getElementById('g-deadline').value = g.deadline || '';
+  document.getElementById('g-progress').value = g.progress;
+  document.getElementById('g-progress-val').textContent = g.progress + '%';
+  pickCategory(g.category);
+  openOverlay('goals-modal');
+}
+
+function deleteGoal(id, event) {
+  event.stopPropagation();
+  if (!confirm('Delete this goal?')) return;
+  setGoals(getGoals().filter(g => g.id !== id));
+  renderGoals();
+}
+
+function saveGoal() {
+  const title    = document.getElementById('g-title').value.trim();
+  const deadline = document.getElementById('g-deadline').value;
+  const progress = parseInt(document.getElementById('g-progress').value);
+
+  if (!title) { alert('Please enter a title.'); return; }
+
+  let goals = getGoals();
+  if (editingGoalId) {
+    goals = goals.map(g =>
+      g.id === editingGoalId ? { ...g, title, category: pickedCategory, deadline, progress } : g
+    );
+  } else {
+    goals.push({ id: String(Date.now()), title, category: pickedCategory, deadline, progress });
+  }
+  setGoals(goals);
+  closeOverlay('goals-modal');
+  renderGoals();
+}
+
+// ─────────────────────────────────────────────────────────
 // SECURITY HELPER
 // Escape any user text before inserting it into HTML.
 // This prevents XSS — e.g. if someone typed <script> in a title.
@@ -973,6 +1207,7 @@ renderWeekStrip();
 renderBlocks();
 renderNotes();
 renderHabits();
+renderGoals();
 
 // Auto-grow the notes textarea as the user types
 document.getElementById('n-body').addEventListener('input', function () {
@@ -986,5 +1221,3 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
-
-
