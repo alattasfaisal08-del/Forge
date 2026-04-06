@@ -297,6 +297,67 @@
     }
     .btn-save:active { opacity: 0.85; }
 
+    /* ── STATS SCREEN ── */
+    .stats-xp-card {
+      margin: 16px 16px 0;
+      background: var(--teal); border-radius: 16px; padding: 20px;
+      display: flex; align-items: center; gap: 16px; color: #fff;
+    }
+    .stats-level-badge {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; flex-shrink: 0; text-align: center;
+      line-height: 1.2;
+    }
+    .stats-xp-info { flex: 1; min-width: 0; }
+    .stats-xp-num  { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+    .stats-xp-bar  {
+      width: 100%; height: 6px; background: rgba(255,255,255,0.3);
+      border-radius: 3px; overflow: hidden; margin: 8px 0 4px;
+    }
+    .stats-xp-fill { height: 100%; background: #fff; border-radius: 3px; transition: width 0.4s; }
+    .stats-xp-next { font-size: 12px; opacity: 0.82; }
+    .stats-row { display: flex; gap: 10px; margin: 12px 16px 0; }
+    .stat-chip {
+      flex: 1; background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 10px; text-align: center;
+    }
+    .stat-val   { font-size: 22px; font-weight: 800; color: var(--teal); }
+    .stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; font-weight: 500; }
+    .stats-section-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px; color: var(--muted); padding: 16px 16px 8px;
+    }
+    .achievement-grid { display: flex; flex-direction: column; gap: 8px; padding: 0 16px 16px; }
+    .ach-card {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px;
+      opacity: 0.35; filter: grayscale(1);
+      transition: opacity 0.2s, filter 0.2s;
+    }
+    .ach-card.unlocked { opacity: 1; filter: none; border-color: var(--teal); background: var(--teal-light); }
+    .ach-icon  { font-size: 26px; flex-shrink: 0; }
+    .ach-title { font-size: 14px; font-weight: 700; }
+    .ach-desc  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .ach-card.unlocked .ach-desc { color: var(--teal); }
+
+    /* ── ACHIEVEMENT TOAST ── */
+    .ach-toast {
+      position: fixed; top: -90px; left: 50%; transform: translateX(-50%);
+      background: var(--teal); color: #fff;
+      border-radius: 14px; padding: 12px 18px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 4px 24px rgba(29,158,117,0.5);
+      z-index: 300; max-width: 340px; width: calc(100% - 40px);
+      transition: top 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .ach-toast.show { top: 12px; }
+    .ach-toast-icon  { font-size: 28px; }
+    .ach-toast-label { font-size: 10px; font-weight: 700; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }
+    .ach-toast-name  { font-size: 15px; font-weight: 700; }
+
     /* ── DESKTOP (600px+) ── */
     @media (min-width: 600px) {
       html        { background: var(--html-bg, #eef0f3); }
@@ -308,6 +369,10 @@
       .goal-list    { padding: 0 48px; }
       .goal-section { padding: 12px 48px 4px; }
       .bottom-nav { max-width: 900px; }
+      .achievement-grid    { padding: 0 48px 16px; }
+      .stats-row           { margin: 12px 48px 0; }
+      .stats-xp-card       { margin: 16px 48px 0; }
+      .stats-section-title { padding: 16px 48px 8px; }
 
       /* Keep FAB anchored to the right edge of the 900px container */
       .fab { right: max(24px, calc(50vw - 450px + 24px)); }
@@ -388,6 +453,48 @@
 </div>
 
 <!-- ════════════════════════════════
+     STATS SCREEN
+═════════════════════════════════ -->
+<div id="screen-stats" class="screen">
+  <div class="header">
+    <div class="header-top">
+      <div class="brand-wrap">
+        <span class="app-brand">Forge</span>
+        <span class="screen-tag">Stats</span>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+    </div>
+  </div>
+
+  <div class="stats-xp-card">
+    <div class="stats-level-badge">LV<br><span id="stats-level" style="font-size:18px">1</span></div>
+    <div class="stats-xp-info">
+      <div class="stats-xp-num"><span id="stats-xp">0</span> XP</div>
+      <div class="stats-xp-bar"><div class="stats-xp-fill" id="stats-xp-fill" style="width:0%"></div></div>
+      <div class="stats-xp-next" id="stats-xp-next">100 XP to level 2</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-chip">
+      <div class="stat-val" id="stats-habits-total">0</div>
+      <div class="stat-label">Habits done</div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-val" id="stats-streak">0</div>
+      <div class="stat-label">Best streak</div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-val" id="stats-leetcode">0</div>
+      <div class="stat-label">LeetCode</div>
+    </div>
+  </div>
+
+  <div class="stats-section-title">Achievements</div>
+  <div class="achievement-grid" id="achievement-grid"></div>
+</div>
+
+<!-- ════════════════════════════════
      BOTTOM NAV
 ═════════════════════════════════ -->
 <nav class="bottom-nav">
@@ -424,10 +531,25 @@
     </svg>
     Notes
   </button>
+  <button class="nav-btn" id="nav-stats" onclick="switchScreen('stats')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+    </svg>
+    Stats
+  </button>
 </nav>
 
 <!-- + button -->
 <button class="fab" id="fab" onclick="openAddModal()">+</button>
+
+<!-- achievement toast -->
+<div class="ach-toast" id="ach-toast">
+  <span class="ach-toast-icon" id="ach-toast-icon">🏆</span>
+  <div>
+    <div class="ach-toast-label">Achievement Unlocked!</div>
+    <div class="ach-toast-name" id="ach-toast-name"></div>
+  </div>
+</div>
 
 <!-- ════════════════════════════════
      SCHEDULE MODAL
@@ -735,13 +857,16 @@ function toggleTheme() {
 function switchScreen(name) {
   currentScreen = name;
 
-  // toggle screen visibility
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
 
-  // highlight active nav button
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-' + name).classList.add('active');
+
+  // Hide FAB on Stats (nothing to add there)
+  document.getElementById('fab').style.display = name === 'stats' ? 'none' : '';
+
+  if (name === 'stats') renderStats();
 }
 
 // ─────────────────────────────────────────────────────────
@@ -932,9 +1057,41 @@ function saveHabit() {
 
 function toggleHabit(id) {
   const checks = getTodayChecks();
-  const idx = checks.indexOf(id);
-  idx === -1 ? checks.push(id) : checks.splice(idx, 1);
-  setTodayChecks(checks);
+  const idx    = checks.indexOf(id);
+
+  if (idx === -1) {
+    checks.push(id);
+    setTodayChecks(checks);
+
+    const stats = getStats();
+    stats.habitCheckCount++;
+
+    const habit = getHabits().find(h => h.id === id);
+    if (habit && habit.title.toLowerCase().includes('leetcode')) {
+      stats.leetcodeCount++;
+    }
+
+    // All habits done today?
+    const allHabits = getHabits();
+    if (allHabits.length > 0 && checks.length === allHabits.length) {
+      const today = todayDateKey();
+      const yest  = yesterdayKey();
+      if (stats.lastAllHabitsDate === yest) {
+        stats.allHabitsStreak++;
+      } else if (stats.lastAllHabitsDate !== today) {
+        stats.allHabitsStreak = 1;
+      }
+      stats.lastAllHabitsDate = today;
+      setStats(stats);
+      awardXP(35); // 10 for habit + 25 bonus for full day
+    } else {
+      setStats(stats);
+      awardXP(10);
+    }
+  } else {
+    checks.splice(idx, 1);
+    setTodayChecks(checks);
+  }
   renderHabits();
 }
 
@@ -999,6 +1156,10 @@ function saveNote() {
   } else {
     // unshift = add to the front → newest note appears first
     notes.unshift({ id: String(Date.now()), title, body, createdAt: Date.now(), updatedAt: Date.now() });
+    const stats = getStats();
+    stats.notesCreated++;
+    setStats(stats);
+    awardXP(5);
   }
 
   setNotes(notes);
@@ -1168,17 +1329,161 @@ function saveGoal() {
 
   if (!title) { alert('Please enter a title.'); return; }
 
+  const stats = getStats();
   let goals = getGoals();
   if (editingGoalId) {
+    const old = goals.find(g => g.id === editingGoalId);
     goals = goals.map(g =>
       g.id === editingGoalId ? { ...g, title, category: pickedCategory, deadline, progress } : g
     );
+    // Reward for hitting 100% for the first time on an existing goal
+    if (old && old.progress < 100 && progress === 100) {
+      stats.goalsCompleted++;
+      setStats(stats);
+      awardXP(50);
+    }
   } else {
     goals.push({ id: String(Date.now()), title, category: pickedCategory, deadline, progress });
+    stats.goalsCreated++;
+    if (progress === 100) stats.goalsCompleted++;
+    setStats(stats);
+    awardXP(5);
+    if (progress === 100) awardXP(50);
   }
   setGoals(goals);
   closeOverlay('goals-modal');
   renderGoals();
+}
+
+// ─────────────────────────────────────────────────────────
+// XP + ACHIEVEMENTS
+// ─────────────────────────────────────────────────────────
+
+const STORAGE_XP       = 'devlog_xp';
+const STORAGE_STATS    = 'devlog_stats';
+const STORAGE_UNLOCKED = 'devlog_achievements';
+
+function getXP()        { return parseInt(localStorage.getItem(STORAGE_XP) || '0'); }
+function setXP(n)       { localStorage.setItem(STORAGE_XP, String(n)); }
+
+const BLANK_STATS = {
+  habitCheckCount: 0, leetcodeCount: 0,
+  notesCreated: 0, goalsCreated: 0, goalsCompleted: 0,
+  allHabitsStreak: 0, lastAllHabitsDate: null,
+};
+function getStats()  { return Object.assign({}, BLANK_STATS, JSON.parse(localStorage.getItem(STORAGE_STATS) || '{}')); }
+function setStats(s) { localStorage.setItem(STORAGE_STATS, JSON.stringify(s)); }
+
+function getUnlocked()  { return JSON.parse(localStorage.getItem(STORAGE_UNLOCKED) || '[]'); }
+function setUnlocked(u) { localStorage.setItem(STORAGE_UNLOCKED, JSON.stringify(u)); }
+
+const ACHIEVEMENTS = [
+  { id: 'first-check',  icon: '✅', title: 'First Rep',          desc: 'Check off your first habit' },
+  { id: 'habits-25',    icon: '💪', title: 'Getting Consistent', desc: '25 habits completed total' },
+  { id: 'habits-100',   icon: '🔥', title: '100 Club',           desc: '100 habits completed total' },
+  { id: 'streak-3',     icon: '🌟', title: 'Three-Peat',         desc: 'Complete all habits 3 days in a row' },
+  { id: 'streak-7',     icon: '⭐', title: 'Week Warrior',       desc: 'Complete all habits 7 days in a row' },
+  { id: 'leetcode-10',  icon: '🧠', title: 'Algorithm Brain',    desc: 'Solve 10 LeetCode problems' },
+  { id: 'leetcode-30',  icon: '⚡', title: 'LeetCode Grinder',   desc: 'Solve 30 LeetCode problems' },
+  { id: 'notes-5',      icon: '📝', title: 'Note Taker',         desc: 'Write 5 notes' },
+  { id: 'notes-20',     icon: '💡', title: 'Deep Thinker',       desc: 'Write 20 notes' },
+  { id: 'goal-first',   icon: '🎯', title: 'Goal Setter',        desc: 'Create your first goal' },
+  { id: 'goal-3x',      icon: '🏆', title: 'Goal Crusher',       desc: 'Complete 3 goals at 100%' },
+  { id: 'xp-100',       icon: '📈', title: 'Level Up',           desc: 'Reach 100 XP' },
+  { id: 'xp-500',       icon: '⚔️', title: 'Forge Master',      desc: 'Reach 500 XP' },
+  { id: 'xp-1000',      icon: '👑', title: 'Elite Coder',        desc: 'Reach 1000 XP' },
+];
+
+function evalAchievements(stats, xp) {
+  return {
+    'first-check':  stats.habitCheckCount >= 1,
+    'habits-25':    stats.habitCheckCount >= 25,
+    'habits-100':   stats.habitCheckCount >= 100,
+    'streak-3':     stats.allHabitsStreak >= 3,
+    'streak-7':     stats.allHabitsStreak >= 7,
+    'leetcode-10':  stats.leetcodeCount >= 10,
+    'leetcode-30':  stats.leetcodeCount >= 30,
+    'notes-5':      stats.notesCreated >= 5,
+    'notes-20':     stats.notesCreated >= 20,
+    'goal-first':   stats.goalsCreated >= 1,
+    'goal-3x':      stats.goalsCompleted >= 3,
+    'xp-100':       xp >= 100,
+    'xp-500':       xp >= 500,
+    'xp-1000':      xp >= 1000,
+  };
+}
+
+function awardXP(amount) {
+  const newXP = getXP() + amount;
+  setXP(newXP);
+  // Check for newly unlocked achievements
+  const stats    = getStats();
+  const unlocked = getUnlocked();
+  const results  = evalAchievements(stats, newXP);
+  let changed = false;
+  ACHIEVEMENTS.forEach(ach => {
+    if (!unlocked.includes(ach.id) && results[ach.id]) {
+      unlocked.push(ach.id);
+      showAchToast(ach);
+      changed = true;
+    }
+  });
+  if (changed) setUnlocked(unlocked);
+  if (currentScreen === 'stats') renderStats();
+}
+
+let toastTimer = null;
+const toastQueue = [];
+function showAchToast(ach) {
+  toastQueue.push(ach);
+  if (toastQueue.length === 1) _showNextToast();
+}
+function _showNextToast() {
+  if (!toastQueue.length) return;
+  const ach   = toastQueue[0];
+  const toast = document.getElementById('ach-toast');
+  document.getElementById('ach-toast-icon').textContent = ach.icon;
+  document.getElementById('ach-toast-name').textContent = ach.title;
+  toast.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.classList.remove('show');
+    toastQueue.shift();
+    setTimeout(_showNextToast, 400);
+  }, 3000);
+}
+
+function yesterdayKey() {
+  const d = new Date(); d.setDate(d.getDate() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function renderStats() {
+  const xp       = getXP();
+  const level    = Math.floor(xp / 100) + 1;
+  const xpInLvl  = xp % 100;
+  const stats    = getStats();
+  const unlocked = getUnlocked();
+
+  document.getElementById('stats-level').textContent    = level;
+  document.getElementById('stats-xp').textContent       = xp;
+  document.getElementById('stats-xp-fill').style.width  = xpInLvl + '%';
+  document.getElementById('stats-xp-next').textContent  = `${100 - xpInLvl} XP to level ${level + 1}`;
+  document.getElementById('stats-habits-total').textContent = stats.habitCheckCount;
+  document.getElementById('stats-streak').textContent       = stats.allHabitsStreak;
+  document.getElementById('stats-leetcode').textContent     = stats.leetcodeCount;
+
+  document.getElementById('achievement-grid').innerHTML = ACHIEVEMENTS.map(ach => {
+    const done = unlocked.includes(ach.id);
+    return `
+    <div class="ach-card${done ? ' unlocked' : ''}">
+      <div class="ach-icon">${ach.icon}</div>
+      <div class="ach-info">
+        <div class="ach-title">${ach.title}</div>
+        <div class="ach-desc">${ach.desc}</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ─────────────────────────────────────────────────────────
@@ -1208,6 +1513,7 @@ renderBlocks();
 renderNotes();
 renderHabits();
 renderGoals();
+renderStats();
 
 // Auto-grow the notes textarea as the user types
 document.getElementById('n-body').addEventListener('input', function () {
