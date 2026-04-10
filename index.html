@@ -354,25 +354,33 @@
       color: var(--muted); cursor: pointer; transition: all 0.15s;
     }
     .filter-chip.active { border-color: var(--teal); background: var(--teal-light); color: var(--teal); }
-    .channel-list { padding: 10px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
-    .channel-card {
-      display: flex; align-items: center; gap: 14px;
+    .video-list { padding: 10px 16px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .video-card {
+      display: flex; flex-direction: column;
       background: var(--card); border: 1px solid var(--border);
-      border-radius: 12px; padding: 14px; text-decoration: none;
-      color: var(--text); transition: background 0.15s, border-color 0.15s;
+      border-radius: 12px; overflow: hidden; text-decoration: none;
+      color: var(--text); transition: border-color 0.15s;
     }
-    .channel-card:active { background: var(--teal-light); border-color: var(--teal); }
-    .channel-avatar {
-      width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+    .video-card:active { border-color: var(--teal); }
+    .video-thumb { position: relative; aspect-ratio: 16/9; background: #111; overflow: hidden; }
+    .video-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .video-play {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(0,0,0,0.65); color: #fff;
       display: flex; align-items: center; justify-content: center;
-      font-size: 18px; font-weight: 800; color: #fff;
+      font-size: 11px; pointer-events: none;
     }
-    .channel-info { flex: 1; min-width: 0; }
-    .channel-name { font-size: 14px; font-weight: 700; }
-    .channel-desc { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .channel-tag {
-      font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; flex-shrink: 0;
-      background: var(--teal-light); color: var(--teal); white-space: nowrap;
+    .video-info { padding: 8px 10px 10px; }
+    .video-title {
+      font-size: 12px; font-weight: 700; line-height: 1.4; margin-bottom: 4px;
+      display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .video-channel { font-size: 11px; color: var(--muted); }
+    .video-tag {
+      display: inline-block; font-size: 9px; font-weight: 700;
+      padding: 2px 7px; border-radius: 20px; margin-top: 5px;
+      background: var(--teal-light); color: var(--teal);
     }
     .shuffle-btn {
       display: flex; align-items: center; gap: 5px;
@@ -413,7 +421,7 @@
       .stats-row           { margin: 12px 48px 0; }
       .stats-xp-card       { margin: 16px 48px 0; }
       .stats-section-title { padding: 16px 48px 8px; }
-      .channel-list        { padding: 10px 48px 16px; }
+      .video-list          { padding: 10px 48px 16px; }
       .learn-filter        { padding: 12px 48px 2px; }
 
       /* Keep FAB anchored to the right edge of the 900px container */
@@ -561,7 +569,7 @@
       <button class="filter-chip"        data-filter="islam"  onclick="setLearnFilter('islam')">Islam</button>
     </div>
   </div>
-  <div class="channel-list" id="channel-list"></div>
+  <div class="video-list" id="video-list"></div>
 </div>
 
 <!-- ════════════════════════════════
@@ -1567,32 +1575,38 @@ function renderStats() {
 // LEARN – CHANNEL RECOMMENDATIONS
 // ─────────────────────────────────────────────────────────
 
-const CHANNELS = [
-  // ── Coding / CS ──
-  { title: 'CS50',           tag: 'CS Foundations', color: '#E25C5C', desc: "Harvard's legendary intro to computer science",  url: 'https://www.youtube.com/@cs50' },
-  { title: 'freeCodeCamp',   tag: 'Coding',         color: '#4A90E2', desc: 'Full project-based courses, completely free',    url: 'https://www.youtube.com/@freecodecamp' },
-  { title: 'NeetCode',       tag: 'LeetCode',       color: '#1D9E75', desc: 'Best LeetCode problem explanations on YouTube',  url: 'https://www.youtube.com/@NeetCode' },
-  { title: 'Fireship',       tag: 'Coding',         color: '#F5A623', desc: 'Fast-paced dev tips, frameworks & trends',      url: 'https://www.youtube.com/@Fireship' },
-  { title: 'Tech With Tim',  tag: 'Coding',         color: '#9B59B6', desc: 'Python, ML & project-based learning',           url: 'https://www.youtube.com/@TechWithTim' },
-  { title: 'NetworkChuck',   tag: 'CS Foundations', color: '#27AE60', desc: 'Networking, Linux & cybersecurity made fun',    url: 'https://www.youtube.com/@NetworkChuck' },
-  { title: 'Abdul Bari',     tag: 'CS Foundations', color: '#E67E22', desc: 'Algorithms & data structures, clearly explained', url: 'https://www.youtube.com/@Abdul_Bari' },
-  { title: 'Kevin Powell',   tag: 'Coding',         color: '#4A90E2', desc: 'CSS & front-end mastery',                      url: 'https://www.youtube.com/@KevinPowell' },
-  { title: 'Traversy Media', tag: 'Coding',         color: '#95A5A6', desc: 'Web dev tutorials for all levels',              url: 'https://www.youtube.com/@TraversyMedia' },
-  { title: 'Theo – t3.gg',   tag: 'Coding',         color: '#9B59B6', desc: 'TypeScript, full-stack & web dev opinions',     url: 'https://www.youtube.com/@t3dotgg' },
-  { title: 'Coderized',      tag: 'CS Foundations', color: '#E25C5C', desc: 'CS concepts visualized beautifully',            url: 'https://www.youtube.com/@coderized' },
-  { title: 'Web Dev Simplified', tag: 'Coding',     color: '#1D9E75', desc: 'Web concepts explained simply & quickly',       url: 'https://www.youtube.com/@WebDevSimplified' },
+const VIDEOS = [
+  // ── Coding ──
+  { id: 'DHjqpvDnNGE', title: 'JavaScript in 100 Seconds',               channel: 'Fireship',           tag: 'Coding' },
+  { id: 'x7X9w_GIm1s', title: 'Python in 100 Seconds',                   channel: 'Fireship',           tag: 'Coding' },
+  { id: 'Tn6-PIqc4UM', title: 'React in 100 Seconds',                    channel: 'Fireship',           tag: 'Coding' },
+  { id: 'zQnBQ4tB3ZA', title: 'TypeScript in 100 Seconds',               channel: 'Fireship',           tag: 'Coding' },
+  { id: 'ok-plXXHlWos', title: 'HTML in 100 Seconds',                    channel: 'Fireship',           tag: 'Coding' },
+  { id: 'OEV8gMkCHXQ', title: 'CSS in 100 Seconds',                     channel: 'Fireship',           tag: 'Coding' },
+  { id: 'hwP7WHIs404', title: 'Git in 100 Seconds',                      channel: 'Fireship',           tag: 'Coding' },
+  { id: 'ysEN5RaKOlA', title: '100+ Web Dev Things You Should Know',     channel: 'Fireship',           tag: 'Coding' },
+  { id: 'rfscVS0vtbw', title: 'Python Full Course for Beginners',        channel: 'freeCodeCamp',       tag: 'Coding' },
+  { id: 'PkZNo7MFNFg', title: 'JavaScript Full Course for Beginners',    channel: 'freeCodeCamp',       tag: 'Coding' },
+  { id: 'RGOj5yH7evk', title: 'Git & GitHub Crash Course',               channel: 'freeCodeCamp',       tag: 'Coding' },
+  { id: 'G3e-cpL7ofc', title: 'HTML & CSS Full Course for Beginners',    channel: 'freeCodeCamp',       tag: 'Coding' },
+  { id: '9zBsdzdE2gY', title: 'Learn CSS Grid in 20 Minutes',            channel: 'Web Dev Simplified', tag: 'Coding' },
+  { id: 'SVvr3ZjtjI8', title: 'How I Got Good at Coding Interviews',     channel: 'NeetCode',           tag: 'Coding' },
+  { id: 'WnPLSRLSANE', title: 'LeetCode was HARD until I Learned This', channel: 'NeetCode',           tag: 'Coding' },
+  { id: 'zOjov-2OZ0E', title: 'You Need to Learn Linux RIGHT NOW',       channel: 'NetworkChuck',       tag: 'Coding' },
   // ── Arabic ──
-  { title: 'ArabicPod101',         tag: 'Arabic', color: '#E25C5C', desc: 'Structured Arabic lessons for all levels',   url: 'https://www.youtube.com/@arabicpod101' },
-  { title: 'Learn Arabic w/ Maha', tag: 'Arabic', color: '#F5A623', desc: 'Friendly Egyptian Arabic & MSA lessons',    url: 'https://www.youtube.com/@LearnArabicwithMaha' },
-  { title: 'Arabic with Lina',     tag: 'Arabic', color: '#9B59B6', desc: 'Conversational Arabic made natural',         url: 'https://www.youtube.com/@arabicwithlina' },
-  { title: 'Dreaming in Arabic',   tag: 'Arabic', color: '#4A90E2', desc: 'Levantine dialect & everyday conversation',  url: 'https://www.youtube.com/@DreaminginArabic' },
+  { id: 'oeVpd8vRYMs', title: 'Arabic for Complete Beginners – Lesson 1', channel: 'ArabicPod101',     tag: 'Arabic' },
+  { id: 'eSEQIYX0DtA', title: 'Arabic Conversation Practice',             channel: 'ArabicPod101',     tag: 'Arabic' },
+  { id: 'VKUFGpGFRDs', title: 'Learn the Arabic Alphabet – Full Guide',   channel: 'Arabic With Sam',  tag: 'Arabic' },
+  { id: 'lD3zquNJIsc', title: '50 Basic Arabic Words You Must Know',      channel: 'Learn Arabic',     tag: 'Arabic' },
   // ── Islam ──
-  { title: 'Omar Suleiman',    tag: 'Islam', color: '#1D9E75', desc: 'Inspiring stories of the Prophets & Companions', url: 'https://www.youtube.com/@omarsuleiman504' },
-  { title: 'Nouman Ali Khan',  tag: 'Islam', color: '#27AE60', desc: 'Quran tafsir & deep life reflections',          url: 'https://www.youtube.com/@NoumanAliKhanOfficial' },
-  { title: 'Mufti Menk',       tag: 'Islam', color: '#4A90E2', desc: 'Practical Islamic guidance for daily life',     url: 'https://www.youtube.com/@MuftiMenk' },
-  { title: 'Islamic Guidance', tag: 'Islam', color: '#9B59B6', desc: 'Short, powerful Islamic reminders',             url: 'https://www.youtube.com/@IslamicGuidance' },
-  { title: 'Yasmin Mogahed',   tag: 'Islam', color: '#E67E22', desc: 'Spiritual healing & emotional resilience',      url: 'https://www.youtube.com/@YasminMogahed' },
-  { title: 'Assim al-Hakeem',  tag: 'Islam', color: '#95A5A6', desc: 'Islamic Q&A & fiqh rulings',                   url: 'https://www.youtube.com/@assimalhakeem' },
+  { id: 'RQ4EJ-yaL5Y', title: 'The Most Beloved Deeds to Allah',         channel: 'Omar Suleiman',     tag: 'Islam' },
+  { id: 'n7bMSRUDCOM', title: 'How the Prophet Handled Stress',          channel: 'Omar Suleiman',     tag: 'Islam' },
+  { id: 'qgDCM3cEsHU', title: 'Dealing With Stress & Anxiety',          channel: 'Mufti Menk',        tag: 'Islam' },
+  { id: 'RHaVSgGQ5cI', title: 'How to Strengthen Your Imaan',           channel: 'Mufti Menk',        tag: 'Islam' },
+  { id: '6ygMRSPDX1U', title: 'Why Do Bad Things Happen to Good People', channel: 'Nouman Ali Khan',   tag: 'Islam' },
+  { id: 'cE-y3GXpLPQ', title: 'The Power of Istighfar',                 channel: 'Nouman Ali Khan',   tag: 'Islam' },
+  { id: 'I35LjBYxRMg', title: 'Short Reminder – Stay Strong in Deen',   channel: 'Islamic Guidance',  tag: 'Islam' },
+  { id: 'P3fCnUWGEF0', title: 'The Beauty of Surah Al-Fatiha',          channel: 'Yasmin Mogahed',    tag: 'Islam' },
 ];
 
 let learnFilter = 'all';
@@ -1615,19 +1629,22 @@ function setLearnFilter(f) {
 }
 
 function refreshLearn() {
-  const filtered = learnFilter === 'all'    ? CHANNELS :
-                   learnFilter === 'coding' ? CHANNELS.filter(c => ['Coding','CS Foundations','LeetCode'].includes(c.tag)) :
-                   learnFilter === 'arabic' ? CHANNELS.filter(c => c.tag === 'Arabic') :
-                                              CHANNELS.filter(c => c.tag === 'Islam');
-  const shown = shuffleArr(filtered).slice(0, 8);
-  document.getElementById('channel-list').innerHTML = shown.map(ch => `
-    <a class="channel-card" href="${ch.url}" target="_blank" rel="noopener noreferrer">
-      <div class="channel-avatar" style="background:${ch.color}">${ch.title[0]}</div>
-      <div class="channel-info">
-        <div class="channel-name">${ch.title}</div>
-        <div class="channel-desc">${ch.desc}</div>
+  const filtered = learnFilter === 'all'    ? VIDEOS :
+                   learnFilter === 'coding' ? VIDEOS.filter(v => v.tag === 'Coding') :
+                   learnFilter === 'arabic' ? VIDEOS.filter(v => v.tag === 'Arabic') :
+                                              VIDEOS.filter(v => v.tag === 'Islam');
+  const shown = shuffleArr(filtered).slice(0, 6);
+  document.getElementById('video-list').innerHTML = shown.map(v => `
+    <a class="video-card" href="https://www.youtube.com/watch?v=${v.id}" target="_blank" rel="noopener noreferrer">
+      <div class="video-thumb">
+        <img src="https://img.youtube.com/vi/${v.id}/mqdefault.jpg" alt="${v.title}" loading="lazy">
+        <div class="video-play">▶</div>
       </div>
-      <span class="channel-tag">${ch.tag}</span>
+      <div class="video-info">
+        <div class="video-title">${v.title}</div>
+        <div class="video-channel">${v.channel}</div>
+        <span class="video-tag">${v.tag}</span>
+      </div>
     </a>`).join('');
 }
 
