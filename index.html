@@ -538,8 +538,8 @@
       <div class="stat-label">Best streak</div>
     </div>
     <div class="stat-chip">
-      <div class="stat-val" id="stats-leetcode">0</div>
-      <div class="stat-label">LeetCode</div>
+      <div class="stat-val" id="stats-notes">0</div>
+      <div class="stat-label">Notes</div>
     </div>
   </div>
 
@@ -839,7 +839,7 @@ const FREE_DAY = [
   { title: 'Lunch + break',       start: '12:00', end: '12:30', color: '#95A5A6' },
   { title: 'Project building',    start: '12:30', end: '14:00', color: '#1D9E75' },
   { title: 'CS foundations',      start: '14:00', end: '15:00', color: '#E25C5C' },
-  { title: 'LeetCode problem',    start: '15:00', end: '15:30', color: '#F5A623' },
+  { title: 'Islamic studies',     start: '15:00', end: '15:30', color: '#1D9E75' },
   { title: 'Evening review',      start: '15:30', end: '16:00', color: '#95A5A6' },
 ];
 
@@ -849,11 +849,12 @@ const SCHOOL_DAY = [
   { title: 'School',              start: '09:00', end: '12:00', color: '#4A90E2' },
   { title: 'Coding study',        start: '12:30', end: '15:30', color: '#9B59B6' },
   { title: 'Evening review',      start: '15:30', end: '16:00', color: '#95A5A6' },
+  { title: 'Islamic studies',     start: '16:00', end: '16:30', color: '#1D9E75' },
 ];
 
 const FRIDAY_BLOCKS = [
   { title: 'Wake up + breakfast', start: '08:00', end: '08:30', color: '#95A5A6' },
-  { title: 'Coding warmup',       start: '08:30', end: '09:00', color: '#9B59B6' },
+  { title: 'Islamic studies',     start: '08:30', end: '09:00', color: '#1D9E75' },
   { title: 'School',              start: '09:00', end: '11:00', color: '#4A90E2' },
   { title: 'At grandparents',     start: '11:00', end: '22:00', color: '#95A5A6' },
 ];
@@ -868,7 +869,7 @@ const SEEDS = {
   sunday:    FREE_DAY,
 };
 
-const SEED_VERSION = 'v2';
+const SEED_VERSION = 'v3';
 
 function seedIfNeeded() {
   if (localStorage.getItem('devlog_seed_version') !== SEED_VERSION) {
@@ -1153,11 +1154,6 @@ function toggleHabit(id) {
 
     const stats = getStats();
     stats.habitCheckCount++;
-
-    const habit = getHabits().find(h => h.id === id);
-    if (habit && habit.title.toLowerCase().includes('leetcode')) {
-      stats.leetcodeCount++;
-    }
 
     // All habits done today?
     const allHabits = getHabits();
@@ -1455,7 +1451,7 @@ function getXP()        { return parseInt(localStorage.getItem(STORAGE_XP) || '0
 function setXP(n)       { localStorage.setItem(STORAGE_XP, String(n)); }
 
 const BLANK_STATS = {
-  habitCheckCount: 0, leetcodeCount: 0,
+  habitCheckCount: 0,
   notesCreated: 0, goalsCreated: 0, goalsCompleted: 0,
   allHabitsStreak: 0, lastAllHabitsDate: null,
 };
@@ -1471,8 +1467,8 @@ const ACHIEVEMENTS = [
   { id: 'habits-100',   icon: '🔥', title: '100 Club',           desc: '100 habits completed total' },
   { id: 'streak-3',     icon: '🌟', title: 'Three-Peat',         desc: 'Complete all habits 3 days in a row' },
   { id: 'streak-7',     icon: '⭐', title: 'Week Warrior',       desc: 'Complete all habits 7 days in a row' },
-  { id: 'leetcode-10',  icon: '🧠', title: 'Algorithm Brain',    desc: 'Solve 10 LeetCode problems' },
-  { id: 'leetcode-30',  icon: '⚡', title: 'LeetCode Grinder',   desc: 'Solve 30 LeetCode problems' },
+  { id: 'habits-50',    icon: '⚙️', title: 'Iron Will',           desc: '50 habits completed total' },
+  { id: 'notes-10',    icon: '📚', title: 'Scholar',             desc: 'Write 10 notes' },
   { id: 'notes-5',      icon: '📝', title: 'Note Taker',         desc: 'Write 5 notes' },
   { id: 'notes-20',     icon: '💡', title: 'Deep Thinker',       desc: 'Write 20 notes' },
   { id: 'goal-first',   icon: '🎯', title: 'Goal Setter',        desc: 'Create your first goal' },
@@ -1489,8 +1485,8 @@ function evalAchievements(stats, xp) {
     'habits-100':   stats.habitCheckCount >= 100,
     'streak-3':     stats.allHabitsStreak >= 3,
     'streak-7':     stats.allHabitsStreak >= 7,
-    'leetcode-10':  stats.leetcodeCount >= 10,
-    'leetcode-30':  stats.leetcodeCount >= 30,
+    'habits-50':    stats.habitCheckCount >= 50,
+    'notes-10':     stats.notesCreated >= 10,
     'notes-5':      stats.notesCreated >= 5,
     'notes-20':     stats.notesCreated >= 20,
     'goal-first':   stats.goalsCreated >= 1,
@@ -1559,7 +1555,7 @@ function renderStats() {
   document.getElementById('stats-xp-next').textContent  = `${100 - xpInLvl} XP to level ${level + 1}`;
   document.getElementById('stats-habits-total').textContent = stats.habitCheckCount;
   document.getElementById('stats-streak').textContent       = stats.allHabitsStreak;
-  document.getElementById('stats-leetcode').textContent     = stats.leetcodeCount;
+  document.getElementById('stats-notes').textContent        = stats.notesCreated;
 
   document.getElementById('achievement-grid').innerHTML = ACHIEVEMENTS.map(ach => {
     const done = unlocked.includes(ach.id);
