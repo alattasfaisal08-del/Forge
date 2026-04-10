@@ -1,4 +1,4 @@
-const CACHE = 'forge-v2';
+const CACHE = 'forge-v3';
 const FILES = ['./'];
 
 self.addEventListener('install', e => {
@@ -11,14 +11,18 @@ self.addEventListener('activate', e => {
     Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
   ));
   self.clients.claim();
+  // Tell all open tabs to reload so they get the new version
+  self.clients.matchAll({ type: 'window' }).then(clients =>
+    clients.forEach(c => c.navigate(c.url))
+  );
 });
 
 self.addEventListener('fetch', e => {
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request).then(res => {
+    fetch(e.request).then(res => {
       const clone = res.clone();
       caches.open(CACHE).then(c => c.put(e.request, clone));
       return res;
-    }))
+    }).catch(() => caches.match(e.request))
   );
 });
