@@ -343,6 +343,46 @@
     .ach-desc  { font-size: 12px; color: var(--muted); margin-top: 2px; }
     .ach-card.unlocked .ach-desc { color: var(--teal); }
 
+    /* ── LEARN SCREEN ── */
+    .learn-header-row { display: flex; align-items: center; justify-content: space-between; }
+    .learn-filter { display: flex; gap: 8px; padding: 12px 16px 2px; overflow-x: auto; scrollbar-width: none; }
+    .learn-filter::-webkit-scrollbar { display: none; }
+    .filter-chip {
+      flex-shrink: 0; padding: 6px 16px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: none;
+      font-size: 13px; font-weight: 600; font-family: inherit;
+      color: var(--muted); cursor: pointer; transition: all 0.15s;
+    }
+    .filter-chip.active { border-color: var(--teal); background: var(--teal-light); color: var(--teal); }
+    .channel-list { padding: 10px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+    .channel-card {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px; text-decoration: none;
+      color: var(--text); transition: background 0.15s, border-color 0.15s;
+    }
+    .channel-card:active { background: var(--teal-light); border-color: var(--teal); }
+    .channel-avatar {
+      width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 800; color: #fff;
+    }
+    .channel-info { flex: 1; min-width: 0; }
+    .channel-name { font-size: 14px; font-weight: 700; }
+    .channel-desc { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .channel-tag {
+      font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; flex-shrink: 0;
+      background: var(--teal-light); color: var(--teal); white-space: nowrap;
+    }
+    .shuffle-btn {
+      display: flex; align-items: center; gap: 5px;
+      background: none; border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 6px 13px; font-size: 13px; font-weight: 600;
+      font-family: inherit; color: var(--muted); cursor: pointer; transition: all 0.15s;
+    }
+    .shuffle-btn:active { border-color: var(--teal); color: var(--teal); }
+    .shuffle-btn svg { width: 13px; height: 13px; }
+
     /* ── ACHIEVEMENT TOAST ── */
     .ach-toast {
       position: fixed; top: -90px; left: 50%; transform: translateX(-50%);
@@ -373,6 +413,8 @@
       .stats-row           { margin: 12px 48px 0; }
       .stats-xp-card       { margin: 16px 48px 0; }
       .stats-section-title { padding: 16px 48px 8px; }
+      .channel-list        { padding: 10px 48px 16px; }
+      .learn-filter        { padding: 12px 48px 2px; }
 
       /* Keep FAB anchored to the right edge of the 900px container */
       .fab { right: max(24px, calc(50vw - 450px + 24px)); }
@@ -495,6 +537,34 @@
 </div>
 
 <!-- ════════════════════════════════
+     LEARN SCREEN
+═════════════════════════════════ -->
+<div id="screen-learn" class="screen">
+  <div class="header">
+    <div class="header-top learn-header-row">
+      <div class="brand-wrap">
+        <span class="app-brand">Forge</span>
+        <span class="screen-tag">Learn</span>
+      </div>
+      <button class="shuffle-btn" onclick="refreshLearn()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 3 21 3 21 8"/><polyline points="3 16 3 21 8 21"/>
+          <path d="M21 3l-7 7M3 21l7-7"/>
+        </svg>
+        Shuffle
+      </button>
+    </div>
+    <div class="learn-filter">
+      <button class="filter-chip active" data-filter="all"    onclick="setLearnFilter('all')">All</button>
+      <button class="filter-chip"        data-filter="coding" onclick="setLearnFilter('coding')">Coding</button>
+      <button class="filter-chip"        data-filter="arabic" onclick="setLearnFilter('arabic')">Arabic</button>
+      <button class="filter-chip"        data-filter="islam"  onclick="setLearnFilter('islam')">Islam</button>
+    </div>
+  </div>
+  <div class="channel-list" id="channel-list"></div>
+</div>
+
+<!-- ════════════════════════════════
      BOTTOM NAV
 ═════════════════════════════════ -->
 <nav class="bottom-nav">
@@ -536,6 +606,12 @@
       <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
     </svg>
     Stats
+  </button>
+  <button class="nav-btn" id="nav-learn" onclick="switchScreen('learn')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="5 3 19 12 5 21 5 3"/>
+    </svg>
+    Learn
   </button>
 </nav>
 
@@ -863,10 +939,11 @@ function switchScreen(name) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-' + name).classList.add('active');
 
-  // Hide FAB on Stats (nothing to add there)
-  document.getElementById('fab').style.display = name === 'stats' ? 'none' : '';
+  // Hide FAB on Stats and Learn screens
+  document.getElementById('fab').style.display = (name === 'stats' || name === 'learn') ? 'none' : '';
 
-  if (name === 'stats') renderStats();
+  if (name === 'stats')  renderStats();
+  if (name === 'learn')  refreshLearn();
 }
 
 // ─────────────────────────────────────────────────────────
@@ -1487,6 +1564,74 @@ function renderStats() {
 }
 
 // ─────────────────────────────────────────────────────────
+// LEARN – CHANNEL RECOMMENDATIONS
+// ─────────────────────────────────────────────────────────
+
+const CHANNELS = [
+  // ── Coding / CS ──
+  { title: 'CS50',           tag: 'CS Foundations', color: '#E25C5C', desc: "Harvard's legendary intro to computer science",  url: 'https://www.youtube.com/@cs50' },
+  { title: 'freeCodeCamp',   tag: 'Coding',         color: '#4A90E2', desc: 'Full project-based courses, completely free',    url: 'https://www.youtube.com/@freecodecamp' },
+  { title: 'NeetCode',       tag: 'LeetCode',       color: '#1D9E75', desc: 'Best LeetCode problem explanations on YouTube',  url: 'https://www.youtube.com/@NeetCode' },
+  { title: 'Fireship',       tag: 'Coding',         color: '#F5A623', desc: 'Fast-paced dev tips, frameworks & trends',      url: 'https://www.youtube.com/@Fireship' },
+  { title: 'Tech With Tim',  tag: 'Coding',         color: '#9B59B6', desc: 'Python, ML & project-based learning',           url: 'https://www.youtube.com/@TechWithTim' },
+  { title: 'NetworkChuck',   tag: 'CS Foundations', color: '#27AE60', desc: 'Networking, Linux & cybersecurity made fun',    url: 'https://www.youtube.com/@NetworkChuck' },
+  { title: 'Abdul Bari',     tag: 'CS Foundations', color: '#E67E22', desc: 'Algorithms & data structures, clearly explained', url: 'https://www.youtube.com/@Abdul_Bari' },
+  { title: 'Kevin Powell',   tag: 'Coding',         color: '#4A90E2', desc: 'CSS & front-end mastery',                      url: 'https://www.youtube.com/@KevinPowell' },
+  { title: 'Traversy Media', tag: 'Coding',         color: '#95A5A6', desc: 'Web dev tutorials for all levels',              url: 'https://www.youtube.com/@TraversyMedia' },
+  { title: 'Theo – t3.gg',   tag: 'Coding',         color: '#9B59B6', desc: 'TypeScript, full-stack & web dev opinions',     url: 'https://www.youtube.com/@t3dotgg' },
+  { title: 'Coderized',      tag: 'CS Foundations', color: '#E25C5C', desc: 'CS concepts visualized beautifully',            url: 'https://www.youtube.com/@coderized' },
+  { title: 'Web Dev Simplified', tag: 'Coding',     color: '#1D9E75', desc: 'Web concepts explained simply & quickly',       url: 'https://www.youtube.com/@WebDevSimplified' },
+  // ── Arabic ──
+  { title: 'ArabicPod101',         tag: 'Arabic', color: '#E25C5C', desc: 'Structured Arabic lessons for all levels',   url: 'https://www.youtube.com/@arabicpod101' },
+  { title: 'Learn Arabic w/ Maha', tag: 'Arabic', color: '#F5A623', desc: 'Friendly Egyptian Arabic & MSA lessons',    url: 'https://www.youtube.com/@LearnArabicwithMaha' },
+  { title: 'Arabic with Lina',     tag: 'Arabic', color: '#9B59B6', desc: 'Conversational Arabic made natural',         url: 'https://www.youtube.com/@arabicwithlina' },
+  { title: 'Dreaming in Arabic',   tag: 'Arabic', color: '#4A90E2', desc: 'Levantine dialect & everyday conversation',  url: 'https://www.youtube.com/@DreaminginArabic' },
+  // ── Islam ──
+  { title: 'Omar Suleiman',    tag: 'Islam', color: '#1D9E75', desc: 'Inspiring stories of the Prophets & Companions', url: 'https://www.youtube.com/@omarsuleiman504' },
+  { title: 'Nouman Ali Khan',  tag: 'Islam', color: '#27AE60', desc: 'Quran tafsir & deep life reflections',          url: 'https://www.youtube.com/@NoumanAliKhanOfficial' },
+  { title: 'Mufti Menk',       tag: 'Islam', color: '#4A90E2', desc: 'Practical Islamic guidance for daily life',     url: 'https://www.youtube.com/@MuftiMenk' },
+  { title: 'Islamic Guidance', tag: 'Islam', color: '#9B59B6', desc: 'Short, powerful Islamic reminders',             url: 'https://www.youtube.com/@IslamicGuidance' },
+  { title: 'Yasmin Mogahed',   tag: 'Islam', color: '#E67E22', desc: 'Spiritual healing & emotional resilience',      url: 'https://www.youtube.com/@YasminMogahed' },
+  { title: 'Assim al-Hakeem',  tag: 'Islam', color: '#95A5A6', desc: 'Islamic Q&A & fiqh rulings',                   url: 'https://www.youtube.com/@assimalhakeem' },
+];
+
+let learnFilter = 'all';
+
+function shuffleArr(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function setLearnFilter(f) {
+  learnFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(b =>
+    b.classList.toggle('active', b.dataset.filter === f)
+  );
+  refreshLearn();
+}
+
+function refreshLearn() {
+  const filtered = learnFilter === 'all'    ? CHANNELS :
+                   learnFilter === 'coding' ? CHANNELS.filter(c => ['Coding','CS Foundations','LeetCode'].includes(c.tag)) :
+                   learnFilter === 'arabic' ? CHANNELS.filter(c => c.tag === 'Arabic') :
+                                              CHANNELS.filter(c => c.tag === 'Islam');
+  const shown = shuffleArr(filtered).slice(0, 8);
+  document.getElementById('channel-list').innerHTML = shown.map(ch => `
+    <a class="channel-card" href="${ch.url}" target="_blank" rel="noopener noreferrer">
+      <div class="channel-avatar" style="background:${ch.color}">${ch.title[0]}</div>
+      <div class="channel-info">
+        <div class="channel-name">${ch.title}</div>
+        <div class="channel-desc">${ch.desc}</div>
+      </div>
+      <span class="channel-tag">${ch.tag}</span>
+    </a>`).join('');
+}
+
+// ─────────────────────────────────────────────────────────
 // SECURITY HELPER
 // Escape any user text before inserting it into HTML.
 // This prevents XSS — e.g. if someone typed <script> in a title.
@@ -1514,6 +1659,7 @@ renderNotes();
 renderHabits();
 renderGoals();
 renderStats();
+refreshLearn();
 
 // Auto-grow the notes textarea as the user types
 document.getElementById('n-body').addEventListener('input', function () {
