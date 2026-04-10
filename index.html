@@ -362,12 +362,15 @@
       color: var(--text); transition: border-color 0.15s;
     }
     .video-card:active { border-color: var(--teal); }
-    .video-thumb { position: relative; aspect-ratio: 16/9; background: #111; overflow: hidden; }
-    .video-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .video-thumb {
+      position: relative; aspect-ratio: 16/9; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .video-thumb-emoji { font-size: 34px; }
     .video-play {
       position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
       width: 34px; height: 34px; border-radius: 50%;
-      background: rgba(0,0,0,0.65); color: #fff;
+      background: rgba(0,0,0,0.45); color: #fff;
       display: flex; align-items: center; justify-content: center;
       font-size: 11px; pointer-events: none;
     }
@@ -1577,36 +1580,40 @@ function renderStats() {
 
 const VIDEOS = [
   // ── Coding ──
-  { id: 'DHjqpvDnNGE', title: 'JavaScript in 100 Seconds',               channel: 'Fireship',           tag: 'Coding' },
-  { id: 'x7X9w_GIm1s', title: 'Python in 100 Seconds',                   channel: 'Fireship',           tag: 'Coding' },
-  { id: 'Tn6-PIqc4UM', title: 'React in 100 Seconds',                    channel: 'Fireship',           tag: 'Coding' },
-  { id: 'zQnBQ4tB3ZA', title: 'TypeScript in 100 Seconds',               channel: 'Fireship',           tag: 'Coding' },
-  { id: 'ok-plXXHlWos', title: 'HTML in 100 Seconds',                    channel: 'Fireship',           tag: 'Coding' },
-  { id: 'OEV8gMkCHXQ', title: 'CSS in 100 Seconds',                     channel: 'Fireship',           tag: 'Coding' },
-  { id: 'hwP7WHIs404', title: 'Git in 100 Seconds',                      channel: 'Fireship',           tag: 'Coding' },
-  { id: 'ysEN5RaKOlA', title: '100+ Web Dev Things You Should Know',     channel: 'Fireship',           tag: 'Coding' },
-  { id: 'rfscVS0vtbw', title: 'Python Full Course for Beginners',        channel: 'freeCodeCamp',       tag: 'Coding' },
-  { id: 'PkZNo7MFNFg', title: 'JavaScript Full Course for Beginners',    channel: 'freeCodeCamp',       tag: 'Coding' },
-  { id: 'RGOj5yH7evk', title: 'Git & GitHub Crash Course',               channel: 'freeCodeCamp',       tag: 'Coding' },
-  { id: 'G3e-cpL7ofc', title: 'HTML & CSS Full Course for Beginners',    channel: 'freeCodeCamp',       tag: 'Coding' },
-  { id: '9zBsdzdE2gY', title: 'Learn CSS Grid in 20 Minutes',            channel: 'Web Dev Simplified', tag: 'Coding' },
-  { id: 'SVvr3ZjtjI8', title: 'How I Got Good at Coding Interviews',     channel: 'NeetCode',           tag: 'Coding' },
-  { id: 'WnPLSRLSANE', title: 'LeetCode was HARD until I Learned This', channel: 'NeetCode',           tag: 'Coding' },
-  { id: 'zOjov-2OZ0E', title: 'You Need to Learn Linux RIGHT NOW',       channel: 'NetworkChuck',       tag: 'Coding' },
+  { emoji: '⚡', grad: ['#F7971E','#FFD200'], title: 'JavaScript in 100 Seconds',               channel: 'Fireship',           tag: 'Coding', q: 'Fireship JavaScript in 100 Seconds' },
+  { emoji: '🐍', grad: ['#3776AB','#FFD43B'], title: 'Python in 100 Seconds',                   channel: 'Fireship',           tag: 'Coding', q: 'Fireship Python in 100 Seconds' },
+  { emoji: '⚛️', grad: ['#00b4d8','#0077b6'], title: 'React in 100 Seconds',                    channel: 'Fireship',           tag: 'Coding', q: 'Fireship React in 100 Seconds' },
+  { emoji: '🔷', grad: ['#3178c6','#235a97'], title: 'TypeScript in 100 Seconds',               channel: 'Fireship',           tag: 'Coding', q: 'Fireship TypeScript in 100 Seconds' },
+  { emoji: '🌐', grad: ['#e44d26','#f16529'], title: 'HTML in 100 Seconds',                     channel: 'Fireship',           tag: 'Coding', q: 'Fireship HTML in 100 Seconds' },
+  { emoji: '🎨', grad: ['#264de4','#2965f1'], title: 'CSS in 100 Seconds',                      channel: 'Fireship',           tag: 'Coding', q: 'Fireship CSS in 100 Seconds' },
+  { emoji: '🌿', grad: ['#f05033','#de4c36'], title: 'Git in 100 Seconds',                      channel: 'Fireship',           tag: 'Coding', q: 'Fireship Git in 100 Seconds' },
+  { emoji: '🗺️', grad: ['#20c997','#0ca678'], title: '100+ Web Dev Things You Should Know',    channel: 'Fireship',           tag: 'Coding', q: 'Fireship 100 web dev things you should know' },
+  { emoji: '🐍', grad: ['#306998','#FFE873'], title: 'Python Full Course for Beginners',        channel: 'freeCodeCamp',       tag: 'Coding', q: 'freeCodeCamp Python full course beginners 2024' },
+  { emoji: '📜', grad: ['#F0DB4F','#323330'], title: 'JavaScript Full Course for Beginners',   channel: 'freeCodeCamp',       tag: 'Coding', q: 'freeCodeCamp JavaScript full course beginners' },
+  { emoji: '🔀', grad: ['#6e5494','#4a3562'], title: 'Git & GitHub Crash Course',               channel: 'freeCodeCamp',       tag: 'Coding', q: 'freeCodeCamp Git GitHub crash course' },
+  { emoji: '🖼️', grad: ['#e96228','#f5a623'], title: 'HTML & CSS Full Course for Beginners',   channel: 'freeCodeCamp',       tag: 'Coding', q: 'freeCodeCamp HTML CSS full course beginners' },
+  { emoji: '📐', grad: ['#38bdf8','#0284c7'], title: 'Learn CSS Grid in 20 Minutes',            channel: 'Web Dev Simplified', tag: 'Coding', q: 'Web Dev Simplified CSS Grid 20 minutes' },
+  { emoji: '🧠', grad: ['#10b981','#059669'], title: 'How I Got Good at Coding Interviews',     channel: 'NeetCode',           tag: 'Coding', q: 'NeetCode how to get good at coding interviews' },
+  { emoji: '💡', grad: ['#7c3aed','#5b21b6'], title: 'LeetCode was HARD until I Learned This', channel: 'NeetCode',           tag: 'Coding', q: 'NeetCode LeetCode was hard until I learned this' },
+  { emoji: '🐧', grad: ['#e11d48','#be123c'], title: 'Linux for Hackers (Ep 1)',                channel: 'NetworkChuck',       tag: 'Coding', q: 'NetworkChuck Linux for hackers episode 1' },
+  { emoji: '🧩', grad: ['#f59e0b','#d97706'], title: 'Data Structures Easy to Advanced Course', channel: 'freeCodeCamp',       tag: 'Coding', q: 'freeCodeCamp data structures easy to advanced full course' },
+  { emoji: '🔑', grad: ['#0ea5e9','#0369a1'], title: 'CS50: Introduction to Computer Science',  channel: 'CS50',               tag: 'Coding', q: 'CS50 Harvard introduction to computer science lecture 0' },
   // ── Arabic ──
-  { id: 'oeVpd8vRYMs', title: 'Arabic for Complete Beginners – Lesson 1', channel: 'ArabicPod101',     tag: 'Arabic' },
-  { id: 'eSEQIYX0DtA', title: 'Arabic Conversation Practice',             channel: 'ArabicPod101',     tag: 'Arabic' },
-  { id: 'VKUFGpGFRDs', title: 'Learn the Arabic Alphabet – Full Guide',   channel: 'Arabic With Sam',  tag: 'Arabic' },
-  { id: 'lD3zquNJIsc', title: '50 Basic Arabic Words You Must Know',      channel: 'Learn Arabic',     tag: 'Arabic' },
+  { emoji: '🔤', grad: ['#16a34a','#15803d'], title: 'Arabic for Complete Beginners – Lesson 1', channel: 'ArabicPod101',     tag: 'Arabic', q: 'ArabicPod101 Arabic complete beginners lesson 1' },
+  { emoji: '💬', grad: ['#0891b2','#0e7490'], title: 'Arabic Conversation Practice for Beginners', channel: 'ArabicPod101',   tag: 'Arabic', q: 'ArabicPod101 Arabic conversation practice beginners' },
+  { emoji: '✍️', grad: ['#dc2626','#b91c1c'], title: 'Learn the Arabic Alphabet – Full Guide',   channel: 'Arabic with Sam',  tag: 'Arabic', q: 'Arabic with Sam learn Arabic alphabet full guide' },
+  { emoji: '📖', grad: ['#7c3aed','#6d28d9'], title: '50 Basic Arabic Words You Must Know',      channel: 'Learn Arabic with Maha', tag: 'Arabic', q: 'Learn Arabic 50 basic words must know beginners' },
+  { emoji: '🗣️', grad: ['#ea580c','#c2410c'], title: 'Arabic Speaking Practice – Daily Life',    channel: 'Arabic with Sam',  tag: 'Arabic', q: 'Arabic speaking practice daily life phrases' },
+  { emoji: '🌙', grad: ['#1d4ed8','#1e40af'], title: 'Quran Arabic for Beginners',               channel: 'Understand Quran Academy', tag: 'Arabic', q: 'Understand Quran Arabic for beginners lesson 1' },
   // ── Islam ──
-  { id: 'RQ4EJ-yaL5Y', title: 'The Most Beloved Deeds to Allah',         channel: 'Omar Suleiman',     tag: 'Islam' },
-  { id: 'n7bMSRUDCOM', title: 'How the Prophet Handled Stress',          channel: 'Omar Suleiman',     tag: 'Islam' },
-  { id: 'qgDCM3cEsHU', title: 'Dealing With Stress & Anxiety',          channel: 'Mufti Menk',        tag: 'Islam' },
-  { id: 'RHaVSgGQ5cI', title: 'How to Strengthen Your Imaan',           channel: 'Mufti Menk',        tag: 'Islam' },
-  { id: '6ygMRSPDX1U', title: 'Why Do Bad Things Happen to Good People', channel: 'Nouman Ali Khan',   tag: 'Islam' },
-  { id: 'cE-y3GXpLPQ', title: 'The Power of Istighfar',                 channel: 'Nouman Ali Khan',   tag: 'Islam' },
-  { id: 'I35LjBYxRMg', title: 'Short Reminder – Stay Strong in Deen',   channel: 'Islamic Guidance',  tag: 'Islam' },
-  { id: 'P3fCnUWGEF0', title: 'The Beauty of Surah Al-Fatiha',          channel: 'Yasmin Mogahed',    tag: 'Islam' },
+  { emoji: '💎', grad: ['#059669','#047857'], title: 'The Most Beloved Deeds to Allah',          channel: 'Omar Suleiman',     tag: 'Islam', q: 'Omar Suleiman most beloved deeds to Allah' },
+  { emoji: '🕊️', grad: ['#0284c7','#0369a1'], title: 'How the Prophet ﷺ Handled Stress',       channel: 'Omar Suleiman',     tag: 'Islam', q: 'Omar Suleiman how the Prophet handled stress' },
+  { emoji: '🌿', grad: ['#16a34a','#166534'], title: 'Dealing With Stress & Anxiety in Islam',  channel: 'Mufti Menk',        tag: 'Islam', q: 'Mufti Menk dealing with stress anxiety Islam' },
+  { emoji: '🔥', grad: ['#f97316','#ea580c'], title: 'How to Strengthen Your Imaan',            channel: 'Mufti Menk',        tag: 'Islam', q: 'Mufti Menk how to strengthen your Imaan' },
+  { emoji: '❓', grad: ['#8b5cf6','#7c3aed'], title: 'Why Do Bad Things Happen to Good People', channel: 'Nouman Ali Khan',   tag: 'Islam', q: 'Nouman Ali Khan why do bad things happen to good people' },
+  { emoji: '🤲', grad: ['#06b6d4','#0891b2'], title: 'The Power of Istighfar',                  channel: 'Nouman Ali Khan',   tag: 'Islam', q: 'Nouman Ali Khan power of Istighfar' },
+  { emoji: '📿', grad: ['#d97706','#b45309'], title: 'The Miracle of Surah Al-Fatiha',          channel: 'Yasmin Mogahed',    tag: 'Islam', q: 'Yasmin Mogahed Surah Al Fatiha miracle meaning' },
+  { emoji: '⭐', grad: ['#be185d','#9d174d'], title: 'Signs of a Strong Connection with Allah', channel: 'Islamic Guidance',  tag: 'Islam', q: 'Islamic Guidance signs strong connection with Allah' },
 ];
 
 let learnFilter = 'all';
@@ -1634,18 +1641,21 @@ function refreshLearn() {
                    learnFilter === 'arabic' ? VIDEOS.filter(v => v.tag === 'Arabic') :
                                               VIDEOS.filter(v => v.tag === 'Islam');
   const shown = shuffleArr(filtered).slice(0, 6);
-  document.getElementById('video-list').innerHTML = shown.map(v => `
-    <a class="video-card" href="https://www.youtube.com/watch?v=${v.id}" target="_blank" rel="noopener noreferrer">
-      <div class="video-thumb">
-        <img src="https://img.youtube.com/vi/${v.id}/mqdefault.jpg" alt="${v.title}" loading="lazy">
+  document.getElementById('video-list').innerHTML = shown.map(v => {
+    const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(v.q)}`;
+    return `
+    <a class="video-card" href="${url}" target="_blank" rel="noopener noreferrer">
+      <div class="video-thumb" style="background:linear-gradient(135deg,${v.grad[0]},${v.grad[1]})">
+        <span class="video-thumb-emoji">${v.emoji}</span>
         <div class="video-play">▶</div>
       </div>
       <div class="video-info">
-        <div class="video-title">${v.title}</div>
-        <div class="video-channel">${v.channel}</div>
-        <span class="video-tag">${v.tag}</span>
+        <div class="video-title">${esc(v.title)}</div>
+        <div class="video-channel">${esc(v.channel)}</div>
+        <span class="video-tag">${esc(v.tag)}</span>
       </div>
-    </a>`).join('');
+    </a>`;
+  }).join('');
 }
 
 // ─────────────────────────────────────────────────────────
